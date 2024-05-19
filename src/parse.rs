@@ -1,7 +1,10 @@
+pub mod structures;
+pub mod utils;
+
 use scanner::data::{Token, TokenType};
 use std::collections::VecDeque;
 
-use crate::{DeclKind, ExpKind, ExpType, Node, ScanError, StmtKind, TreeNode};
+use structures::{DeclKind, ExpKind, ExpType, Node, ScanError, StmtKind, TreeNode};
 
 fn _match(token: TokenType, tokens: &mut VecDeque<Token>) -> Result<(), ScanError> {
     let current_token = get_current_token(tokens).unwrap().clone();

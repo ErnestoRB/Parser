@@ -1,4 +1,4 @@
-use crate::{DeclKind, ExpKind, Node, StmtKind, TreeNode};
+use super::structures::{DeclKind, ExpKind, Node, StmtKind, TreeNode};
 
 impl TreeNode {
     pub fn new(node: Node) -> Self {
