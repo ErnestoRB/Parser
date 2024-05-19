@@ -195,7 +195,7 @@ checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 [[package]]
 name = "scanner"
 version = "0.1.0"
-source = "git+https://github.com/ErnestoRB/Scanner.git#878ae5d7ffd6542ae8c8ad45d0ead8455e3a5244"
+source = "git+https://github.com/ErnestoRB/Scanner.git#fc302db7632b0237a75dc00d2ee501199b884128"
 dependencies = [
  "clap",
  "phf",
