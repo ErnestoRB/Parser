@@ -11,7 +11,7 @@ listaSentencias —> listaSentencia sentencia |vacío
 sentencia -> selección | iteración | repetición | sentIn |sentOut | asignación
 asignación -> = sentExpresión
 sentExpresión -> expresión; | ;
-selección -> if expresión { sentencia } |if expresión { sentencia } else { sentencia } end
+selección -> if expresión { sentencia } |if expresión { sentencia } else { sentencia }
 iteración -> while expresión { sentencia }
 repetición -> do { sentencia } while expresión ;
 sentIn -> cin id;

@@ -7,14 +7,27 @@ use std::collections::VecDeque;
 use structures::{DeclKind, ExpKind, ExpType, Node, ScanError, StmtKind, TreeNode};
 
 fn _match(token: TokenType, tokens: &mut VecDeque<Token>) -> Result<(), ScanError> {
-    let current_token = get_current_token(tokens).unwrap().clone();
-    if current_token.token_type != token {
+    let current_token = get_current_token(tokens).clone();
+    match current_token {
+        Some(c_token) => {
+            if c_token.token_type != token {
+                return Err(ScanError {
+                    message: format!("Se estaba esperando un token del tipo {:?}", token)
+                        .to_string(),
+                    expected_token_type: Some(vec![token]),
+                    current_token: current_token.cloned(),
+                });
+            }
+        }
+        None => 
         return Err(ScanError {
-            message: format!("Se estaba esperando un token del tipo {:?}", token).to_string(),
+            message: format!("Se estaba esperando un token del tipo {:?} pero ya no hay ningun token disponible!", token)
+                .to_string(),
             expected_token_type: Some(vec![token]),
-            current_token,
-        });
+            current_token: current_token.cloned(),
+        })
     }
+
     get_next_token(tokens);
     Ok(())
 }
@@ -59,14 +72,11 @@ fn lista_declaracion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, S
 }
 
 fn declaracion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> {
-    let t = match get_current_token(tokens) {
-        Some(token) => match token.token_type {
-            TokenType::INT | TokenType::DOUBLE => declaracion_variable(tokens),
-            _ => lista_sentencias(tokens),
-        },
-        None => todo!(),
-    };
-    t
+    let token = get_current_token(tokens).unwrap(); 
+    match token.token_type {
+        TokenType::INT | TokenType::DOUBLE => declaracion_variable(tokens),
+        _ => lista_sentencias(tokens),
+    }
 }
 
 fn declaracion_variable(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> {
@@ -74,40 +84,34 @@ fn declaracion_variable(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>
         get_current_token(tokens).unwrap().token_type.clone(),
         tokens,
     )?; // consumir token integer o double que ya se comprobo en la regla anterior
-    let name = get_current_token(tokens).unwrap().lexemme.clone();
-    _match(TokenType::ID, tokens)?;
-    identificador(name.clone(), tokens).map(|decls| {
-        let mut t = TreeNode::new(Node::Decl(DeclKind::Var {
-            typ: get_current_token(tokens).unwrap().token_type.clone(),
-            name: name,
-        }));
-        t.sibling = Some(Box::new(decls.unwrap()));
-        _match(TokenType::SCOL, tokens);
-        Some(t)
-    })
+    let t = identificador(tokens);
+    _match(TokenType::SCOL, tokens)?;
+    t
 }
 
 fn identificador(
-    first_name: String,
     tokens: &mut VecDeque<Token>,
 ) -> Result<Option<TreeNode>, ScanError> {
-    let token = get_current_token(tokens).unwrap();
-    let mut t = TreeNode::new(Node::Decl(DeclKind::Var {
+    let token = get_current_token(tokens).unwrap().clone();
+    _match(TokenType::ID, tokens)?;
+    let mut t = Box::new(TreeNode::new(Node::Decl(DeclKind::Var {
         typ: token.token_type.clone(),
-        name: first_name,
-    }));
+        name: token.lexemme.clone(),
+    })));
+    let mut p = t.as_mut();
     while get_current_token(tokens).unwrap().token_type == TokenType::COMMA {
         _match(TokenType::COMMA, tokens)?;
         let name = get_current_token(tokens).unwrap().lexemme.clone();
+        let typ =  get_current_token(tokens).unwrap().token_type.clone();
         _match(TokenType::ID, tokens)?;
         let sibling = TreeNode::new(Node::Decl(DeclKind::Var {
-            typ: get_current_token(tokens).unwrap().token_type.clone(),
+            typ,
             name,
         }));
-        t.sibling = Some(Box::new(sibling));
-        t = *t.sibling.unwrap();
+        p.sibling = Some(Box::new(sibling));
+        p = p.sibling.as_mut().unwrap();
     }
-    Ok(Some(t))
+    Ok(Some(*t))
 }
 
 fn lista_sentencias(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> {
@@ -128,8 +132,7 @@ fn lista_sentencias(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, Sc
 }
 
 fn sentencia(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> {
-    let token = get_next_token(tokens).unwrap();
-    match token.token_type {
+    match get_current_token(tokens).unwrap().token_type {
         TokenType::IF => seleccion(tokens),
         TokenType::WHILE => iteracion(tokens),
         TokenType::DO => repeticion(tokens),
@@ -137,7 +140,11 @@ fn sentencia(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError
         TokenType::STDOUT => sent_out(tokens),
         TokenType::ID => asignacion(tokens),
         _ => {
-            let expected = vec![
+           
+            //get_next_token(tokens);
+            Ok(None)
+            /* 
+             let expected = vec![
                 TokenType::IF,
                 TokenType::WHILE,
                 TokenType::DO,
@@ -145,15 +152,14 @@ fn sentencia(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError
                 TokenType::STDOUT,
                 TokenType::ID,
             ];
-            get_next_token(tokens);
-            Err(ScanError {
-                current_token: token.clone(),
+             Err(ScanError {
+                current_token: get_current_token(tokens).cloned(),
                 message: format!(
                     "Mala sentencia, se esperaba uno de los siguientes tokens: {:?}",
                     expected
                 ),
                 expected_token_type: Some(expected),
-            })
+            }) */
         }
     }
 }
@@ -181,6 +187,7 @@ fn seleccion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError
     let condition = expresion(tokens)?;
     _match(TokenType::LBRA, tokens)?;
     let then_branch = sentencia(tokens)?;
+    _match(TokenType::RBRA, tokens)?;
     let else_branch = if get_current_token(tokens).unwrap().token_type == TokenType::ELSE {
         _match(TokenType::ELSE, tokens)?;
         _match(TokenType::LBRA, tokens)?;
@@ -190,8 +197,14 @@ fn seleccion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError
     } else {
         None
     };
-    // _match(TokenType::END, tokens);
-    _match(TokenType::RBRA, tokens)?;
+    if then_branch.is_none() {
+        return Err(ScanError {
+            current_token: get_current_token(tokens).cloned(),
+            expected_token_type: None,
+            message: "Se esperaba la rama then en la expresion if".to_string()
+        });
+    }
+    
     Ok(Some(TreeNode::new(Node::Stmt(StmtKind::If {
         condition: Box::new(condition.unwrap().node),
         then_branch: Box::new(then_branch.unwrap().node),
@@ -233,7 +246,7 @@ fn sent_in(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> 
 }
 
 fn sent_out(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> {
-    _match(TokenType::STDIN, tokens)?;
+    _match(TokenType::STDOUT, tokens)?;
     let expression = expresion(tokens)?;
     _match(TokenType::SCOL, tokens)?;
     Ok(Some(TreeNode::new(Node::Stmt(StmtKind::Out {
@@ -336,7 +349,7 @@ fn factor(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> {
                     "Expresion no válida. Se esperaba alguno de los siguientes tokens: {:?}",
                     expected_token_type
                 ),
-                current_token: token.clone(),
+                current_token: Some(token.clone()),
                 expected_token_type: Some(expected_token_type),
             })
         }

@@ -1,0 +1,12 @@
+main {
+    //double x, y, z;
+    double a;
+    double b;
+    stdin x;
+    stdout 1;
+   // a > 10;
+
+   /* if a > 10 {
+        integer b;
+    } */
+}

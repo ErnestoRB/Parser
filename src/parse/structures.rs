@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct ScanError {
-    pub current_token: Token,
+    pub current_token: Option<Token>,
     pub expected_token_type: Option<Vec<TokenType>>,
     pub message: String,
 }
