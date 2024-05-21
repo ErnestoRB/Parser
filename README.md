@@ -1,4 +1,6 @@
-## Parser
+## Vainilla Parser
+
+Regla gramática del lenguaje:
 
 ```
 programa —> main { lista_declaración }
@@ -25,4 +27,10 @@ factor -> factor potOp componente | componente
 componente -> ( expresión ) | número | incremento
 incremento —> id operadorIncremento | id
 operadorIncremento —> ++ | --
+```
+
+Para probar:
+
+```
+cargo run -- --verbose --save build assets/ejemplo.cat
 ```
