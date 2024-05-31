@@ -11,7 +11,7 @@ identificador -> identificador , id | id
 tipo —> integer | double
 listaSentencias —> listaSentencia sentencia |vacío
 sentencia -> selección | iteración | repetición | sentIn |sentOut | asignación
-asignación -> = sentExpresión
+asignación -> id = sentExpresión
 sentExpresión -> expresión; | ;
 selección -> if expresión { sentencia } |if expresión { sentencia } else { sentencia }
 iteración -> while expresión { sentencia }
@@ -21,9 +21,11 @@ sentOut -> cout expresión;
 expresión -> expresiónSimple relaciónOp expresiónSimple | expresiónSimple
 relacionOp -> < |<= | > | >= | == | !=
 expresiónSimple -> expresiónSimple sumaOp termino | termino
+sumaOp -> + =
 termino -> termino multOp factor | factor
 multOp -> * | / |%
 factor -> factor potOp componente | componente
+multOp -> ^
 componente -> ( expresión ) | número | incremento
 incremento —> id operadorIncremento | id
 operadorIncremento —> ++ | --

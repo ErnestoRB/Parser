@@ -1,12 +1,31 @@
 main {
-    //double x, y, z;
+    double a;
+    double x, y, z;
     double a;
     double b;
     stdin x;
     stdout 1;
-   // a > 10;
+    a=3<3;
+    a=3 == 3;
+    a=4 + 3;
+    a= 1 + 3 * 4;
+    a=1 + 3 * 4 + ( 9 + 4 ) ^ 2 + a++;
 
-   /* if a > 10 {
-        integer b;
-    } */
+    if a > 10 {
+        b = 40;
+    }
+
+    if a > 10 {
+        c = 40;
+    } else {
+        d= 10;
+    }
+
+    while 1==1 {
+        d=4;
+    }
+
+    do {
+        c=4;
+    } while 1>2;
 }

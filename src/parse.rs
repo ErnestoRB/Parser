@@ -2,7 +2,7 @@ pub mod structures;
 pub mod utils;
 
 use scanner::data::{Token, TokenType};
-use std::collections::VecDeque;
+use std::{collections::VecDeque, ops::{ DerefMut}};
 
 use structures::{DeclKind, ExpKind, ExpType, Node, ScanError, StmtKind, TreeNode};
 
@@ -57,19 +57,19 @@ fn programa(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError>
 fn lista_declaracion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> {
     let mut t = declaracion(tokens)?;
     let mut p = t.as_mut();
-    while let Some(_) = p {
+    while let Some(p_node) = p {
         let q = declaracion(tokens)?;
-        if let Some(q_node) = q {
-            if let Some(p_node) = p {
-                p_node.sibling = Some(Box::new(q_node));
-                p = p_node.sibling.as_deref_mut();
-            }
+        if let Some(q_node) = q { // si hay declaracion, formar hermanos
+            p_node.sibling = Some(Box::new(q_node));
+            p = p_node.sibling.as_deref_mut();
         } else {
             break;
         }
     }
     Ok(t)
 }
+
+
 
 fn declaracion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> {
     let token = get_current_token(tokens).unwrap(); 
@@ -94,11 +94,11 @@ fn identificador(
 ) -> Result<Option<TreeNode>, ScanError> {
     let token = get_current_token(tokens).unwrap().clone();
     _match(TokenType::ID, tokens)?;
-    let mut t = Box::new(TreeNode::new(Node::Decl(DeclKind::Var {
+    let mut t = TreeNode::new(Node::Decl(DeclKind::Var {
         typ: token.token_type.clone(),
         name: token.lexemme.clone(),
-    })));
-    let mut p = t.as_mut();
+    }));
+    let mut p = &mut t;
     while get_current_token(tokens).unwrap().token_type == TokenType::COMMA {
         _match(TokenType::COMMA, tokens)?;
         let name = get_current_token(tokens).unwrap().lexemme.clone();
@@ -111,19 +111,19 @@ fn identificador(
         p.sibling = Some(Box::new(sibling));
         p = p.sibling.as_mut().unwrap();
     }
-    Ok(Some(*t))
+    Ok(Some(t))
 }
 
 fn lista_sentencias(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> {
     let mut t = sentencia(tokens)?;
     let mut p = t.as_mut();
-    while let Some(_) = p {
+    while let Some(p_node) = p {
         let q = sentencia(tokens)?;
         if let Some(q_node) = q {
-            if let Some(p_node) = p {
-                p_node.sibling = Some(Box::new(q_node));
-                p = p_node.sibling.as_deref_mut();
-            }
+            //if let Some(p_node) = p {
+            p_node.sibling = Some(Box::new(q_node));
+            p = p_node.sibling.as_deref_mut();
+            //}
         } else {
             break;
         }
@@ -231,6 +231,7 @@ fn repeticion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanErro
     _match(TokenType::RBRA, tokens)?;
     _match(TokenType::WHILE, tokens)?;
     let condition = expresion(tokens)?;
+    _match(TokenType::SCOL, tokens)?;
     Ok(Some(TreeNode::new(Node::Stmt(StmtKind::Do {
         body: Box::new(body.unwrap().node),
         condition: Box::new(condition.unwrap().node),
@@ -307,7 +308,7 @@ fn termino(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> 
 
     while matches!(
         get_current_token(tokens).unwrap().token_type,
-        TokenType::TIMES | TokenType::POWER | TokenType::MODULUS
+        TokenType::TIMES | TokenType::DIV | TokenType::MODULUS
     ) {
         let op = get_current_token(tokens).unwrap().token_type.clone();
         _match(op.clone(), tokens)?;
@@ -325,6 +326,28 @@ fn termino(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> 
 }
 
 fn factor(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> {
+    let mut t = componente(tokens)?;
+
+    while matches!(
+        get_current_token(tokens).unwrap().token_type,
+        TokenType::POWER
+    ) {
+        let op = get_current_token(tokens).unwrap().token_type.clone();
+        _match(op.clone(), tokens)?;
+        let right = componente(tokens)?;
+        t = Some(TreeNode::new(Node::Exp {
+            typ: ExpType::Void,
+            kind: ExpKind::Op {
+                op,
+                left: Box::new(t.unwrap().node),
+                right: Box::new(right.unwrap().node),
+            },
+        }));
+    }
+    Ok(t)
+}
+
+fn componente(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> {
     let token = get_current_token(tokens).unwrap();
     match token.token_type {
         TokenType::LPAR => {

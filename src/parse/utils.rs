@@ -16,6 +16,16 @@ impl TreeNode {
     pub fn print(&self) {
         print_tree(self, 0);
     }
+    pub fn last_sibling(&self) -> Option<&Box<TreeNode>> {
+        let mut current = self.sibling.as_ref();
+        while let Some(ref next) = current {
+            if next.sibling.is_none() {
+                break;
+            }
+            current = next.sibling.as_ref();
+        }
+        current
+    }
 }
 
 fn print_tree(node: &TreeNode, indent: usize) {
