@@ -2,7 +2,7 @@ use scanner::data::{Token, TokenType};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct ScanError {
+pub struct ParseError {
     pub current_token: Option<Token>,
     pub expected_token_type: Option<Vec<TokenType>>,
     pub message: String,
