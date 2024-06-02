@@ -181,12 +181,12 @@ fn seleccion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError
     _match(TokenType::IF, tokens)?;
     let condition = expresion(tokens)?;
     _match(TokenType::LBRA, tokens)?;
-    let then_branch = sentencia(tokens)?;
+    let then_branch = lista_sentencias(tokens)?;
     _match(TokenType::RBRA, tokens)?;
     let else_branch = if get_current_token(tokens).unwrap().token_type == TokenType::ELSE {
         _match(TokenType::ELSE, tokens)?;
         _match(TokenType::LBRA, tokens)?;
-        let r = Some(Box::new(sentencia(tokens)?));
+        let r = Some(Box::new(lista_sentencias(tokens)?));
         _match(TokenType::RBRA, tokens)?;
         r
     } else {
@@ -202,8 +202,8 @@ fn seleccion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError
     
     Ok(Some(TreeNode::new(Node::Stmt(StmtKind::If {
         condition: Box::new(condition.unwrap().node),
-        then_branch: Box::new(then_branch.unwrap().node),
-        else_branch: else_branch.map(|n| Box::new(n.unwrap().node)),
+        then_branch: Box::new(then_branch.unwrap()),
+        else_branch: else_branch.map(|n| Box::new(n.unwrap())),
     }))))
 }
 
@@ -211,24 +211,29 @@ fn iteracion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError
     _match(TokenType::WHILE, tokens)?;
     let condition = expresion(tokens)?;
     _match(TokenType::LBRA, tokens)?;
-    let body = sentencia(tokens)?;
+    let body = lista_sentencias(tokens)?;
     _match(TokenType::RBRA, tokens)?;
     Ok(Some(TreeNode::new(Node::Stmt(StmtKind::While {
         condition: Box::new(condition.unwrap().node),
-        body: Box::new(body.unwrap().node),
+        body: Box::new(body.unwrap()),
     }))))
 }
 
 fn repeticion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> {
     _match(TokenType::DO, tokens)?;
     _match(TokenType::LBRA, tokens)?;
-    let body = sentencia(tokens)?;
+    let body = lista_sentencias(tokens)?;
     _match(TokenType::RBRA, tokens)?;
     _match(TokenType::WHILE, tokens)?;
     let condition = expresion(tokens)?;
+/*     if(condition.is_none()) {
+        return ScanError{
+            message: "Se esperaba una expresion para el ciclo"
+        }
+    } */
     _match(TokenType::SCOL, tokens)?;
     Ok(Some(TreeNode::new(Node::Stmt(StmtKind::Do {
-        body: Box::new(body.unwrap().node),
+        body: Box::new(body.unwrap()),
         condition: Box::new(condition.unwrap().node),
     }))))
 }
