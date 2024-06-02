@@ -101,6 +101,9 @@ fn print_tree(node: &TreeNode, indent: usize) {
             ExpKind::Const { value } => {
                 println!("{}Exp: Const (Value: {})", indentation, value);
             }
+            ExpKind::ConstF { value } => {
+                println!("{}Exp: Const Float (Value: {})", indentation, value);
+            }
             ExpKind::Id { name } => {
                 println!("{}Exp: Id (Name: {})", indentation, name);
             }

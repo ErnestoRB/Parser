@@ -66,6 +66,9 @@ pub enum ExpKind {
     Const {
         value: i32,
     },
+    ConstF {
+        value: f32,
+    },
     Id {
         name: String,
     },

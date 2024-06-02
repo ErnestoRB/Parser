@@ -286,19 +286,53 @@ fn expresion_simple(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, Sc
     let mut t = termino(tokens)?;
     while matches!(
         get_current_token(tokens).unwrap().token_type,
-        TokenType::SUM | TokenType::MIN
+        TokenType::SUM | TokenType::MIN | TokenType::INT | TokenType::FLOAT
     ) {
-        let op = get_current_token(tokens).unwrap().token_type.clone();
-        _match(op.clone(), tokens)?;
-        let right = termino(tokens)?;
-        t = Some(TreeNode::new(Node::Exp {
-            typ: ExpType::Void,
-            kind: ExpKind::Op {
-                op,
-                left: Box::new(t.unwrap().node),
-                right: Box::new(right.unwrap().node),
-            },
-        }));
+        let curr = get_current_token(tokens).unwrap();
+        let op = curr.token_type.clone();
+        match op {
+            TokenType::SUM | TokenType::MIN =>  {
+                _match(op.clone(), tokens)?;
+                let right = termino(tokens)?;
+                t = Some(TreeNode::new(Node::Exp {
+                    typ: ExpType::Void,
+                    kind: ExpKind::Op {
+                        op,
+                        left: Box::new(t.unwrap().node),
+                        right: Box::new(right.unwrap().node),
+                    },
+                }));
+             },
+            TokenType::INT | TokenType::FLOAT => {
+                if curr.lexemme.contains('+') {
+                    let right = termino(tokens)?;
+                    t = Some(TreeNode::new(Node::Exp {
+                        typ: ExpType::Void,
+                        kind: ExpKind::Op {
+                            op: TokenType::SUM,
+                            left: Box::new(t.unwrap().node),
+                            right: Box::new(right.unwrap().node),
+                        },
+                    }));
+                } else if curr.lexemme.contains('-') {
+                    let right = termino(tokens)?;
+                    t = Some(TreeNode::new(Node::Exp {
+                        typ: ExpType::Void,
+                        kind: ExpKind::Op {
+                            op: TokenType::MIN,
+                            left: Box::new(t.unwrap().node),
+                            right: Box::new(right.unwrap().node),
+                        },
+                    }));
+                } else {
+                    return Err(ScanError { current_token: Some(curr.clone()), 
+                        expected_token_type: Some(vec![TokenType::SUM,TokenType::MIN]),
+                         message: "Se estaba esperando un simbolo de sumas".to_string()})
+                }
+            }
+            _ => {}
+        }
+       
     }
     Ok(t)
 }
@@ -363,7 +397,15 @@ fn componente(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanErro
                 kind: ExpKind::Const { value },
                 typ: ExpType::Void,
             })))
-        }
+        },
+        TokenType::FLOAT => {
+            let value: f32 = token.lexemme.parse().unwrap();
+            _match(TokenType::FLOAT, tokens)?;
+            Ok(Some(TreeNode::new(Node::Exp {
+                kind: ExpKind::ConstF { value },
+                typ: ExpType::Void,
+            })))
+        },
         TokenType::ID => incremento(tokens),
         _ => {
             let expected_token_type = vec![TokenType::LPAR, TokenType::INT, TokenType::ID];
