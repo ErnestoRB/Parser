@@ -26,6 +26,16 @@ impl TreeNode {
         }
         current
     }
+    pub fn get_last_sibling_mut(&mut self) -> &mut TreeNode {
+        // Primero, verificamos si hay un hermano
+        if let Some(ref mut sibling) = self.sibling {
+            // Si hay un hermano, llamamos recursivamente a la función en ese hermano
+            sibling.get_last_sibling_mut()
+        } else {
+            // Si no hay un hermano, retornamos una referencia mutable al nodo actual
+            self
+        }
+    }
 }
 
 fn print_tree(node: &TreeNode, indent: usize) {

@@ -56,20 +56,15 @@ fn programa(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError>
 
 fn lista_declaracion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> {
     let mut t = declaracion(tokens)?;
-    let mut p = t.as_mut();
-    while let Some(p_node) = p {
-        let q = declaracion(tokens)?;
-        if let Some(q_node) = q { // si hay declaracion, formar hermanos
-            p_node.sibling = Some(Box::new(q_node));
-            p = p_node.sibling.as_deref_mut();
-        } else {
-            break;
+    if let Some(ta) = &mut t{
+        let mut last_sib = ta.get_last_sibling_mut();
+        while let Some(q_node) = declaracion(tokens)? {
+            last_sib.sibling = Some(Box::new(q_node));
+            last_sib = last_sib.get_last_sibling_mut();
         }
     }
     Ok(t)
 }
-
-
 
 fn declaracion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ScanError> {
     let token = get_current_token(tokens).unwrap(); 
