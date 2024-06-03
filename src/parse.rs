@@ -69,7 +69,7 @@ fn lista_declaracion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, P
 fn declaracion(tokens: &mut VecDeque<Token>) -> Result<Option<TreeNode>, ParseError> {
     let token = get_current_token(tokens).unwrap(); 
     match token.token_type {
-        TokenType::INT | TokenType::DOUBLE => declaracion_variable(tokens),
+        TokenType::INTEGER | TokenType::DOUBLE => declaracion_variable(tokens),
         _ => lista_sentencias(tokens),
     }
 }

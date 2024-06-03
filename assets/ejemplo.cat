@@ -40,8 +40,13 @@ main {
         if b==2 {
             stdout y;
             stdout y;
-
         }
         stdin x;
     }
+
+    if 1 {
+        stdin x;
+    }
+    integer a;
+    double a;
 }
