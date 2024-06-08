@@ -4,7 +4,6 @@ main {
     double a;
     double b;
     stdin x;
-    stdout 1;
     a=123.23 +123.45;
     a=123.23 +132;
     a=3<3;
