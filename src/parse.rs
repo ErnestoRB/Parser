@@ -520,43 +520,45 @@ fn factor(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option<
 }
 
 fn componente(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option<TreeNode> {
-    let token = get_current_token(tokens).unwrap();
-    match token.token_type {
-        TokenType::LPAR => {
-            _match(TokenType::LPAR, tokens, errors);
-            let node = expresion(tokens, errors);
-            _match(TokenType::RPAR, tokens, errors);
-            node
-        }
-        TokenType::INT => {
-            let value: i32 = token.lexemme.parse().unwrap();
-            _match(TokenType::INT, tokens, errors);
-            Some(TreeNode::new(Node::Exp {
-                kind: ExpKind::Const { value },
-                typ: ExpType::Void,
-            }))
-        }
-        TokenType::FLOAT => {
-            let value: f32 = token.lexemme.parse().unwrap();
-            _match(TokenType::FLOAT, tokens, errors);
-            Some(TreeNode::new(Node::Exp {
-                kind: ExpKind::ConstF { value },
-                typ: ExpType::Void,
-            }))
-        }
-        TokenType::ID => incremento(tokens, errors),
-        _ => {
-            let expected_token_type = vec![TokenType::LPAR, TokenType::INT, TokenType::ID];
-            errors.push(ParseError {
-                message: format!(
-                    "Expresión no válida. Se esperaba uno de los siguientes tokens: {:?}",
-                    expected_token_type
-                ),
-                current_token: Some(token.clone()),
-                expected_token_type: Some(expected_token_type),
-            });
-            None
-        }
+    match get_current_token(tokens) {
+        Some(token) => match token.token_type {
+            TokenType::LPAR => {
+                _match(TokenType::LPAR, tokens, errors);
+                let node = expresion(tokens, errors)?;
+                _match(TokenType::RPAR, tokens, errors);
+                Some(node)
+            }
+            TokenType::INT => {
+                let value: i32 = token.lexemme.parse().unwrap();
+                _match(TokenType::INT, tokens, errors);
+                Some(TreeNode::new(Node::Exp {
+                    kind: ExpKind::Const { value },
+                    typ: ExpType::Void,
+                }))
+            }
+            TokenType::FLOAT => {
+                let value: f32 = token.lexemme.parse().unwrap();
+                _match(TokenType::FLOAT, tokens, errors);
+                Some(TreeNode::new(Node::Exp {
+                    kind: ExpKind::ConstF { value },
+                    typ: ExpType::Void,
+                }))
+            }
+            TokenType::ID => incremento(tokens, errors),
+            _ => {
+                let expected_token_type = vec![TokenType::LPAR, TokenType::INT, TokenType::ID];
+                errors.push(ParseError {
+                    message: format!(
+                        "Expresión no válida. Se esperaba uno de los siguientes tokens: {:?}",
+                        expected_token_type
+                    ),
+                    current_token: Some(token.clone()),
+                    expected_token_type: Some(expected_token_type),
+                });
+                None
+            }
+        },
+        None => None,
     }
 }
 

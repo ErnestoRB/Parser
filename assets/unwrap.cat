@@ -1,5 +1,4 @@
 main
     {
-        integer id ; uwu = 10;
-        
-    }
+        //integer id, a, ; uwu = 10;
+        stdout
