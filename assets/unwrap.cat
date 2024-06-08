@@ -1,4 +1,10 @@
 main
     {
         //integer id, a, ; uwu = 10;
-        stdout
+        stdout a;
+        if 1 {
+
+        }
+
+        do { } while  ;
+    }

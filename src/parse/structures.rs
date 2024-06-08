@@ -32,15 +32,15 @@ pub enum StmtKind {
     // Sentencias soportadas
     If {
         condition: Box<Node>,
-        then_branch: Box<TreeNode>,
+        then_branch: Option<Box<TreeNode>>,
         else_branch: Option<Box<TreeNode>>,
     },
     While {
         condition: Box<Node>,
-        body: Box<TreeNode>,
+        body: Option<Box<TreeNode>>,
     },
     Do {
-        body: Box<TreeNode>,
+        body: Option<Box<TreeNode>>,
         condition: Box<Node>,
     },
     Assign {

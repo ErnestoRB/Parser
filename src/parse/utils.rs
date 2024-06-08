@@ -56,7 +56,9 @@ fn print_tree(node: &TreeNode, indent: usize) {
                 println!("{}  Condition:", indentation);
                 print_tree_node(condition, indent + 4);
                 println!("{}  Then Branch:", indentation);
-                print_tree(then_branch, indent + 4);
+                if let Some(then) = then_branch {
+                    print_tree(then, indent + 4);
+                }
                 if let Some(else_branch) = else_branch {
                     println!("{}  Else Branch:", indentation);
                     print_tree(else_branch, indent + 4);
@@ -67,12 +69,16 @@ fn print_tree(node: &TreeNode, indent: usize) {
                 println!("{}  Condition:", indentation);
                 print_tree_node(condition, indent + 4);
                 println!("{}  Body:", indentation);
-                print_tree(body, indent + 4);
+                if let Some(body) = body {
+                    print_tree(body, indent + 4);
+                }
             }
             StmtKind::Do { body, condition } => {
                 println!("{}Stmt: Do", indentation);
                 println!("{}  Body:", indentation);
-                print_tree(body, indent + 4);
+                if let Some(body) = body {
+                    print_tree(body, indent + 4);
+                }
                 println!("{}  Condition:", indentation);
                 print_tree_node(condition, indent + 4);
             }
