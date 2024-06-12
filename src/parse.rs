@@ -260,16 +260,19 @@ fn seleccion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
         });
         return None;
     }
-    let condition = expresion(tokens, errors)?;
-    if !_match(TokenType::LBRA, tokens, errors) {
+    let condition = expresion(tokens, errors);
+    if condition.is_none() {
         errors.push(ParseError {
-            message: "Se esperaba '{'".to_string(),
-            expected_token_type: Some(vec![TokenType::LBRA]),
+            message: "Se esperaba una expresion como condición del if".to_string(),
+            expected_token_type: None,
             current_token: get_current_token(tokens).cloned(),
         });
         return None;
     }
-    let then_branch = lista_sentencias(tokens, errors)?;
+    if !_match(TokenType::LBRA, tokens, errors) {
+        return None;
+    }
+    let then_branch = lista_sentencias(tokens, errors);
     if !_match(TokenType::RBRA, tokens, errors) {
         errors.push(ParseError {
             message: "Se esperaba '}'".to_string(),
@@ -292,8 +295,8 @@ fn seleccion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
         None
     };
     Some(TreeNode::new(Node::Stmt(StmtKind::If {
-        condition: Box::new(condition.node),
-        then_branch: Box::new(then_branch),
+        condition: Box::new(condition.unwrap().node),
+        then_branch: then_branch.map(|n| Box::new(n)),
         else_branch: else_branch.map(|n| Box::new(n)),
     })))
 }
@@ -316,7 +319,7 @@ fn iteracion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
         });
         return None;
     }
-    let body = lista_sentencias(tokens, errors)?;
+    let body = lista_sentencias(tokens, errors);
     if !_match(TokenType::RBRA, tokens, errors) {
         errors.push(ParseError {
             message: "Se esperaba '}'".to_string(),
@@ -327,7 +330,7 @@ fn iteracion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
     }
     Some(TreeNode::new(Node::Stmt(StmtKind::While {
         condition: Box::new(condition.node),
-        body: Box::new(body),
+        body: body.map(|n| Box::new(n)),
     })))
 }
 
@@ -348,7 +351,7 @@ fn repeticion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
         });
         return None;
     }
-    let body = lista_sentencias(tokens, errors)?;
+    let body = lista_sentencias(tokens, errors);
     if !_match(TokenType::RBRA, tokens, errors) {
         errors.push(ParseError {
             message: "Se esperaba '}'".to_string(),
@@ -368,7 +371,7 @@ fn repeticion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
     let condition = expresion(tokens, errors)?;
     _match(TokenType::SCOL, tokens, errors);
     Some(TreeNode::new(Node::Stmt(StmtKind::Do {
-        body: Box::new(body),
+        body: body.map(|n| Box::new(n)),
         condition: Box::new(condition.node),
     })))
 }
