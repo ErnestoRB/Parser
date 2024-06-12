@@ -150,17 +150,33 @@ fn lista_sentencias(
     tokens: &mut VecDeque<Token>,
     errors: &mut Vec<ParseError>,
 ) -> Option<TreeNode> {
-    let mut node = sentencia(tokens, errors);
-    let mut current_node = node.as_mut();
+    let mut node = None;
+    let mut current_node: *mut TreeNode = std::ptr::null_mut();
 
-    while let Some(s) = sentencia(tokens, errors) {
-        if let Some(cn) = current_node {
-            cn.sibling = Some(Box::new(s));
-            current_node = cn.sibling.as_deref_mut();
-        } else {
-            break;
-            /*  node = Some(s);
-            current_node = node.as_mut(); */
+    while !tokens.is_empty() {
+        let original_len = errors.len(); //Hay que checar la longitud de esta lista para ver si mas adelante va a haber errores
+        let result = sentencia(tokens, errors);
+
+        match result {
+            Some(mut new_node) => {
+                if node.is_none() {
+                    node = Some(new_node);
+                    current_node = node.as_mut().unwrap();
+                } else {
+                    unsafe {
+                        (*current_node).sibling = Some(Box::new(new_node));
+                        current_node = (*current_node).sibling.as_deref_mut().unwrap();
+                    }
+                }
+            }
+            None => {
+                if errors.len() != original_len { //si aumento el valor de la lista fue porque hubo un error una vez retorna el None
+                    get_next_token(tokens); //entonces ese token no es valido, se va con el siguiente
+                }
+                else {
+                    break;
+                }
+            }
         }
     }
 

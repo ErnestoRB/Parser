@@ -1,4 +1,7 @@
 main
     {
-        //integer id, a, ; uwu = 10;
-        stdout
+        stdin x;
+        123
+        a = 1;
+        111
+    }
