@@ -1,10 +1,7 @@
 main
     {
-        //integer id, a, ; uwu = 10;
-        stdout a;
-        if 1 {
-
-        }
-
-        do { } while  ;
+        stdin x;
+        123
+        a = 1;
+        111
     }
