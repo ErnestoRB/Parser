@@ -51,6 +51,20 @@ fn get_next_token(tokens: &mut VecDeque<Token>) -> Option<Token> {
     tokens.pop_front()
 }
 
+fn sincronizar(tokens: &mut VecDeque<Token>) {
+    while let Some(token) = get_current_token(tokens) {
+        match token.token_type {
+            TokenType::SCOL | TokenType::RBRA | TokenType::LBRA => {
+                get_next_token(tokens);
+                break;
+            }
+            _ => {
+                get_next_token(tokens);
+            }
+        }
+    }
+}
+
 pub fn parse(tokens: Vec<Token>) -> (Option<TreeNode>, Vec<ParseError>) {
     let mut deque = VecDeque::from(tokens);
     let mut errors = Vec::new();
@@ -618,16 +632,3 @@ fn incremento(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
     }
 }
 
-fn sincronizar(tokens: &mut VecDeque<Token>) {
-    while let Some(token) = get_current_token(tokens) {
-        match token.token_type {
-            TokenType::SCOL | TokenType::RBRA | TokenType::LBRA => {
-                get_next_token(tokens);
-                break;
-            }
-            _ => {
-                get_next_token(tokens);
-            }
-        }
-    }
-}
