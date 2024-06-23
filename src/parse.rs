@@ -272,6 +272,43 @@ fn asignacion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
         avanzar_hasta(tokens, TokenType::SCOL);
         return None;
     }
+
+    match get_current_token(tokens) {
+        Some(token) => {
+            match token.token_type {
+                TokenType::INC | TokenType::DEC => {
+                    let operacion = match token.token_type {
+                        TokenType::INC => TokenType::SUM,
+                        TokenType::DEC => TokenType::MIN,
+                        _ => unreachable!("Tipo de token inesperado"),
+                    };
+                    _match(token.token_type.clone(), tokens, errors, true); // ++ o --
+                    let node = Some(TreeNode::new(Node::Stmt(StmtKind::Assign {
+                        name: name.clone(),
+                        value: Box::new(Node::Exp {
+                            typ: ExpType::Void,
+                            kind: ExpKind::Op {
+                                op: operacion,
+                                left: Box::new(Node::Exp {
+                                    typ: ExpType::Void,
+                                    kind: ExpKind::Id { name: name.clone() },
+                                }),
+                                right: Box::new(Node::Exp {
+                                    typ: ExpType::Void,
+                                    kind: ExpKind::Const { value: 1 },
+                                }),
+                            },
+                        }),
+                    })));
+                    _match(TokenType::SCOL, tokens, errors, true);
+                    return node;
+                }
+                _ => {}
+            }
+        }
+        None => return None,
+    }
+
     if !_match(TokenType::ASSIGN, tokens, errors, false) {
         errors.push(ParseError {
             message: "Se esperaba '='".to_string(),
@@ -550,22 +587,12 @@ fn expresion_simple(
                 });
             }
             TokenType::INT | TokenType::FLOAT => {
-                if curr.lexemme.contains('+') {
+                if curr.lexemme.contains('+') || curr.lexemme.contains('-') {
                     let right = termino(tokens, errors)?;
                     node = TreeNode::new(Node::Exp {
                         typ: ExpType::Void,
                         kind: ExpKind::Op {
                             op: TokenType::SUM,
-                            left: Box::new(node.node),
-                            right: Box::new(right.node),
-                        },
-                    });
-                } else if curr.lexemme.contains('-') {
-                    let right = termino(tokens, errors)?;
-                    node = TreeNode::new(Node::Exp {
-                        typ: ExpType::Void,
-                        kind: ExpKind::Op {
-                            op: TokenType::MIN,
                             left: Box::new(node.node),
                             right: Box::new(right.node),
                         },
