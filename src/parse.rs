@@ -15,14 +15,6 @@ fn _match(token: TokenType, tokens: &mut VecDeque<Token>, errors: &mut Vec<Parse
                     expected_token_type: Some(vec![token]),
                     current_token: Some(c_token),
                 });
-
-                while let Some(token) = get_current_token(tokens) {
-                    if token.token_type == TokenType::SCOL || token.token_type == TokenType::RBRA {
-                        break;
-                    }
-                    get_next_token(tokens);
-                }
-
                 return false;
             }
         }
@@ -49,20 +41,6 @@ fn get_current_token(tokens: &VecDeque<Token>) -> Option<&Token> {
 
 fn get_next_token(tokens: &mut VecDeque<Token>) -> Option<Token> {
     tokens.pop_front()
-}
-
-fn sincronizar(tokens: &mut VecDeque<Token>) {
-    while let Some(token) = get_current_token(tokens) {
-        match token.token_type {
-            TokenType::SCOL | TokenType::RBRA | TokenType::LBRA => {
-                get_next_token(tokens);
-                break;
-            }
-            _ => {
-                get_next_token(tokens);
-            }
-        }
-    }
 }
 
 pub fn parse(tokens: Vec<Token>) -> (Option<TreeNode>, Vec<ParseError>) {
@@ -176,7 +154,7 @@ fn lista_sentencias(
     let mut current_node: *mut TreeNode = std::ptr::null_mut();
 
     while !tokens.is_empty() {
-        let original_len = errors.len();
+        let original_len = errors.len(); //Hay que checar la longitud de esta lista para ver si mas adelante va a haber errores
         let result = sentencia(tokens, errors);
 
         match result {
@@ -192,9 +170,10 @@ fn lista_sentencias(
                 }
             }
             None => {
-                if errors.len() != original_len {
-                    sincronizar(tokens);
-                } else {
+                if errors.len() != original_len { //si aumento el valor de la lista fue porque hubo un error una vez retorna el None
+                    get_next_token(tokens); //entonces ese token no es valido, se va con el siguiente
+                }
+                else {
                     break;
                 }
             }
@@ -207,11 +186,13 @@ fn lista_sentencias(
 fn sentencia(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option<TreeNode> {
     let token = get_current_token(tokens).cloned();
     if token.is_none() {
+        // si es none, salir
         return None;
     }
 
     let curr_token = token.as_ref().unwrap();
     match curr_token.token_type {
+        // es seguro
         TokenType::IF => seleccion(tokens, errors),
         TokenType::WHILE => iteracion(tokens, errors),
         TokenType::DO => repeticion(tokens, errors),
@@ -260,7 +241,7 @@ fn asignacion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
 
 fn sent_expresion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option<TreeNode> {
     let node = expresion(tokens, errors);
-    if node.is_some() && !_match(TokenType::SCOL, tokens, errors) {
+    if !_match(TokenType::SCOL, tokens, errors) {
         errors.push(ParseError {
             message: "Se esperaba ';'".to_string(),
             expected_token_type: Some(vec![TokenType::SCOL]),
@@ -593,7 +574,6 @@ fn componente(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
                     current_token: Some(token.clone()),
                     expected_token_type: Some(expected_token_type),
                 });
-                
                 None
             }
         },
@@ -631,4 +611,3 @@ fn incremento(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
         }))
     }
 }
-
