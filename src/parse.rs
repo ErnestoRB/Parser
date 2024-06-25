@@ -205,11 +205,15 @@ fn lista_sentencias(
             Some(new_node) => {
                 if node.is_none() {
                     node = Some(new_node);
-                    current_node = node.as_mut().unwrap();
+                    current_node = node.as_mut().unwrap().get_last_sibling_mut();
                 } else {
                     unsafe {
                         (*current_node).sibling = Some(Box::new(new_node));
-                        current_node = (*current_node).sibling.as_deref_mut().unwrap();
+                        current_node = (*current_node)
+                            .sibling
+                            .as_deref_mut()
+                            .unwrap()
+                            .get_last_sibling_mut();
                     }
                 }
             }
