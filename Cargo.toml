@@ -7,3 +7,5 @@ edition = "2021"
 clap = { version = "4.5.4", features = ["derive"] }
 scanner = { git = "https://github.com/ErnestoRB/Scanner.git", version = "0.1.0" }
 serde = { version = "1.0.202", features = ["derive"] }
+serde_json = "1.0.118"
+uuid = { version = "1.9.1", features = ["v4", "fast-rng", "macro-diagnostics"] }

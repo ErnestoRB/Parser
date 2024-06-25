@@ -1,5 +1,9 @@
 main {
     double a;
+    w = 3-3;
+    y++;
+    z--;
+
     double x, y, z;
     double a;
     double b;

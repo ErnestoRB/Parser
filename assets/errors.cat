@@ -1,0 +1,49 @@
+main
+    {
+        hola = 1;
+        5019
+        a = (1 + 1 (1/1) + 1 + (1); // no estan balanceados los parentesis y faltan operadores
+        a = (1 + 1 + (1/1) + 1 + (1); // no estan balanceados los parentesis y faltan operadores
+        a = 1 + ; // falta identificador o numero
+        a = a++;
+        b = 2;
+        b x ;
+
+        if 3 > 2  {
+            stdin x;
+        }
+
+        if (1 + 1 (1/1) + 1 + (1) {
+            a = 23;
+            algo que no se va a analizar
+        }
+
+        hola = 3;
+
+        while (1 + 1 (1/1) + 1 + (1) {
+
+        }
+
+         while 1 {
+            a =3;
+            123
+            a =4;
+            a =5;
+        }
+
+        do {
+
+        } while 3;
+
+        do {
+
+        } while ==4;
+
+        stdin 123123;
+        stdout a;
+        stdout (a+3);
+        stdout (a+3+(5);
+
+
+    }
+    15

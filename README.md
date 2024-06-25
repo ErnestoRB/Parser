@@ -11,7 +11,7 @@ identificador -> identificador , id | id
 tipo —> integer | double
 listaSentencias —> listaSentencia sentencia |vacío
 sentencia -> selección | iteración | repetición | sentIn |sentOut | asignación
-asignación -> id = sentExpresión
+asignación -> id = sentExpresión | id ++; | id --;
 sentExpresión -> expresión; | ;
 selección -> if expresión { listaSentencias } |if expresión { listaSentencias } else { listaSentencias }
 iteración -> while expresión { listaSentencias }

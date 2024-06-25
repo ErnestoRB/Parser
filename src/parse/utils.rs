@@ -41,12 +41,12 @@ impl TreeNode {
 fn print_tree(node: &TreeNode, indent: usize) {
     let indentation = " ".repeat(indent);
     match &node.node {
-        Node::Decl(decl) => match decl {
+        Node::Decl { kind, id: _ } => match kind {
             DeclKind::Var { typ, name } => {
                 println!("{}Decl: Var (Type: {:?}, Name: {})", indentation, typ, name);
             }
         },
-        Node::Stmt(stmt) => match stmt {
+        Node::Stmt { kind, id: _ } => match kind {
             StmtKind::If {
                 condition,
                 then_branch,
@@ -96,7 +96,7 @@ fn print_tree(node: &TreeNode, indent: usize) {
                 print_tree_node(expression, indent + 4);
             }
         },
-        Node::Exp { kind, typ } => match kind {
+        Node::Exp { kind, typ, id: _ } => match kind {
             ExpKind::Op { op, left, right } => {
                 println!("{}Exp: Op ({:?})", indentation, op);
                 println!("{}  Left:", indentation);

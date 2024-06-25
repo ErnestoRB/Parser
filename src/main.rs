@@ -16,6 +16,9 @@ struct Cli {
     #[arg(short, long)]
     /// Don't write tokens to files
     save: bool,
+    #[arg(short, long)]
+    /// Output file to a json
+    json: bool,
 }
 
 #[derive(Subcommand, Clone)]
@@ -56,6 +59,7 @@ fn main() {
                             if cli.verbose {
                                 println!("[VERBOSE] Trying to save to {:?}", output_file.to_str());
                             }
+
                             if let Ok(mut file_handle) = fs::File::create(output_file.clone()) {
                                 for token in res.0.iter() {
                                     if let Err(_) = file_handle.write_fmt(format_args!(
@@ -72,7 +76,10 @@ fn main() {
                                 eprintln!("ERROR: Could not create file {}", file);
                             }
                         } else {
-                            eprintln!("ERROR: Could not save file {} due to invalid filename", file);
+                            eprintln!(
+                                "ERROR: Could not save file {} due to invalid filename",
+                                file
+                            );
                         }
                     }
                     if cli.verbose {
@@ -90,7 +97,45 @@ fn main() {
                     }
                     let (root_op, errors) = parse(res.0);
                     if let Some(root) = root_op {
-                        root.print();
+                        //hubo arbol
+                        if let Some(filename) = Path::new(&file).file_name() {
+                            if cli.json {
+                                let json_file = Path::new(&file)
+                                    .parent()
+                                    .unwrap_or(Path::new("."))
+                                    .join(filename.to_str().unwrap().to_owned() + ".json");
+                                println!("[JSON] Trying to save to {:?}", json_file.to_str());
+                                let json = serde_json::to_string_pretty(&root);
+                                match json {
+                                    Ok(str) => {
+                                        if let Ok(mut file_handle) =
+                                            fs::File::create(json_file.clone())
+                                        {
+                                            if let Err(_) =
+                                                file_handle.write_fmt(format_args!("{}", str))
+                                            {
+                                                eprintln!(
+                                                    "ERROR: Could not write to {}",
+                                                    json_file.to_str().unwrap()
+                                                );
+                                            }
+                                        } else {
+                                            eprintln!(
+                                                "ERROR: Could not create file {}",
+                                                json_file.to_string_lossy()
+                                            );
+                                        }
+                                    }
+                                    Err(_) => todo!(),
+                                }
+                            } else {
+                                eprintln!(
+                                    "ERROR: Could not save file {} due to invalid filename",
+                                    file
+                                );
+                            }
+                        }
+                        root.print(); // imprimir a stdout
                     }
                     if !errors.is_empty() {
                         for err in errors {
