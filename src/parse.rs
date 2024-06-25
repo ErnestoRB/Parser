@@ -4,6 +4,7 @@ pub mod utils;
 use scanner::data::{Token, TokenType};
 use std::collections::VecDeque;
 use structures::{DeclKind, ExpKind, ExpType, Node, ParseError, StmtKind, TreeNode};
+use uuid::Uuid;
 
 fn _match(
     token: TokenType,
@@ -152,10 +153,13 @@ fn identificador(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> 
             if !_match(TokenType::ID, tokens, errors, true) {
                 return None;
             }
-            let mut node = TreeNode::new(Node::Decl(DeclKind::Var {
-                typ: token.token_type.clone(),
-                name: token.lexemme.clone(),
-            }));
+            let mut node = TreeNode::new(Node::Decl {
+                kind: DeclKind::Var {
+                    typ: token.token_type.clone(),
+                    name: token.lexemme.clone(),
+                },
+                id: Uuid::new_v4().to_string(),
+            });
             let mut current_node = &mut node;
 
             while let Some(Token {
@@ -169,10 +173,13 @@ fn identificador(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> 
                 if !_match(TokenType::ID, tokens, errors, true) || token_op.is_none() {
                     break;
                 }
-                let sibling_node = TreeNode::new(Node::Decl(DeclKind::Var {
-                    typ: token.token_type.clone(),
-                    name: token_op.unwrap().lexemme.clone(), // seguro
-                }));
+                let sibling_node = TreeNode::new(Node::Decl {
+                    kind: DeclKind::Var {
+                        typ: token.token_type.clone(),
+                        name: token_op.unwrap().lexemme.clone(), // seguro
+                    },
+                    id: Uuid::new_v4().to_string(),
+                });
                 current_node.sibling = Some(Box::new(sibling_node));
                 current_node = current_node.sibling.as_mut().unwrap();
             }
@@ -283,23 +290,29 @@ fn asignacion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
                         _ => unreachable!("Tipo de token inesperado"),
                     };
                     _match(token.token_type.clone(), tokens, errors, true); // ++ o --
-                    let node = Some(TreeNode::new(Node::Stmt(StmtKind::Assign {
-                        name: name.clone(),
-                        value: Box::new(Node::Exp {
-                            typ: ExpType::Void,
-                            kind: ExpKind::Op {
-                                op: operacion,
-                                left: Box::new(Node::Exp {
-                                    typ: ExpType::Void,
-                                    kind: ExpKind::Id { name: name.clone() },
-                                }),
-                                right: Box::new(Node::Exp {
-                                    typ: ExpType::Void,
-                                    kind: ExpKind::Const { value: 1 },
-                                }),
-                            },
-                        }),
-                    })));
+                    let node = Some(TreeNode::new(Node::Stmt {
+                        id: Uuid::new_v4().to_string(),
+                        kind: StmtKind::Assign {
+                            name: name.clone(),
+                            value: Box::new(Node::Exp {
+                                typ: ExpType::Void,
+                                kind: ExpKind::Op {
+                                    op: operacion,
+                                    left: Box::new(Node::Exp {
+                                        typ: ExpType::Void,
+                                        kind: ExpKind::Id { name: name.clone() },
+                                        id: Uuid::new_v4().to_string(),
+                                    }),
+                                    right: Box::new(Node::Exp {
+                                        typ: ExpType::Void,
+                                        kind: ExpKind::Const { value: 1 },
+                                        id: Uuid::new_v4().to_string(),
+                                    }),
+                                },
+                                id: Uuid::new_v4().to_string(),
+                            }),
+                        },
+                    }));
                     _match(TokenType::SCOL, tokens, errors, true);
                     return node;
                 }
@@ -319,10 +332,13 @@ fn asignacion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
         return None;
     }
     let value = sent_expresion(tokens, errors)?;
-    Some(TreeNode::new(Node::Stmt(StmtKind::Assign {
-        name,
-        value: Box::new(value.node),
-    })))
+    Some(TreeNode::new(Node::Stmt {
+        id: Uuid::new_v4().to_string(),
+        kind: StmtKind::Assign {
+            name,
+            value: Box::new(value.node),
+        },
+    }))
 }
 
 fn sent_expresion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option<TreeNode> {
@@ -392,11 +408,14 @@ fn seleccion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
     } else {
         None
     };
-    Some(TreeNode::new(Node::Stmt(StmtKind::If {
-        condition: Box::new(condition.unwrap().node),
-        then_branch: then_branch.map(|n| Box::new(n)),
-        else_branch: else_branch.map(|n| Box::new(n)),
-    })))
+    Some(TreeNode::new(Node::Stmt {
+        id: Uuid::new_v4().to_string(),
+        kind: StmtKind::If {
+            condition: Box::new(condition.unwrap().node),
+            then_branch: then_branch.map(|n| Box::new(n)),
+            else_branch: else_branch.map(|n| Box::new(n)),
+        },
+    }))
 }
 
 fn iteracion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option<TreeNode> {
@@ -432,10 +451,13 @@ fn iteracion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
 
                 return None;
             }
-            Some(TreeNode::new(Node::Stmt(StmtKind::While {
-                condition: Box::new(condition.node),
-                body: body.map(|n| Box::new(n)),
-            })))
+            Some(TreeNode::new(Node::Stmt {
+                id: Uuid::new_v4().to_string(),
+                kind: StmtKind::While {
+                    condition: Box::new(condition.node),
+                    body: body.map(|n| Box::new(n)),
+                },
+            }))
         }
         None => {
             avanzar_hasta(tokens, TokenType::RBRA);
@@ -486,10 +508,13 @@ fn repeticion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
     match expresion(tokens, errors) {
         Some(condition) => {
             _match(TokenType::SCOL, tokens, errors, false);
-            Some(TreeNode::new(Node::Stmt(StmtKind::Do {
-                body: body.map(|n| Box::new(n)),
-                condition: Box::new(condition.node),
-            })))
+            Some(TreeNode::new(Node::Stmt {
+                id: Uuid::new_v4().to_string(),
+                kind: StmtKind::Do {
+                    body: body.map(|n| Box::new(n)),
+                    condition: Box::new(condition.node),
+                },
+            }))
         }
         None => {
             avanzar_hasta(tokens, TokenType::SCOL); // punto seguro
@@ -511,7 +536,10 @@ fn sent_in(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option
     }
     let name = curr_token.unwrap().lexemme.clone();
     _match(TokenType::SCOL, tokens, errors, true);
-    Some(TreeNode::new(Node::Stmt(StmtKind::In { name })))
+    Some(TreeNode::new(Node::Stmt {
+        id: Uuid::new_v4().to_string(),
+        kind: StmtKind::In { name },
+    }))
 }
 
 fn sent_out(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option<TreeNode> {
@@ -527,9 +555,12 @@ fn sent_out(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Optio
         return None;
     }
     _match(TokenType::SCOL, tokens, errors, true);
-    Some(TreeNode::new(Node::Stmt(StmtKind::Out {
-        expression: Box::new(expression.unwrap().node),
-    })))
+    Some(TreeNode::new(Node::Stmt {
+        id: Uuid::new_v4().to_string(),
+        kind: StmtKind::Out {
+            expression: Box::new(expression.unwrap().node),
+        },
+    }))
 }
 
 fn expresion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option<TreeNode> {
@@ -547,6 +578,7 @@ fn expresion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
                 _match(op.clone(), tokens, errors, true); // siempre es true
                 let right = expresion_simple(tokens, errors)?;
                 node = TreeNode::new(Node::Exp {
+                    id: Uuid::new_v4().to_string(),
                     typ: ExpType::Void,
                     kind: ExpKind::Op {
                         op,
@@ -578,6 +610,7 @@ fn expresion_simple(
                 _match(op.clone(), tokens, errors, true); // siempre es true
                 let right = termino(tokens, errors)?;
                 node = TreeNode::new(Node::Exp {
+                    id: Uuid::new_v4().to_string(),
                     typ: ExpType::Void,
                     kind: ExpKind::Op {
                         op,
@@ -590,6 +623,7 @@ fn expresion_simple(
                 if curr.lexemme.contains('+') || curr.lexemme.contains('-') {
                     let right = termino(tokens, errors)?;
                     node = TreeNode::new(Node::Exp {
+                        id: Uuid::new_v4().to_string(),
                         typ: ExpType::Void,
                         kind: ExpKind::Op {
                             op: TokenType::SUM,
@@ -622,6 +656,7 @@ fn termino(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option
         _match(op.clone(), tokens, errors, true);
         let right = factor(tokens, errors)?;
         node = TreeNode::new(Node::Exp {
+            id: Uuid::new_v4().to_string(),
             typ: ExpType::Void,
             kind: ExpKind::Op {
                 op,
@@ -643,6 +678,7 @@ fn factor(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option<
         _match(op.clone(), tokens, errors, true);
         let right = componente(tokens, errors)?;
         node = TreeNode::new(Node::Exp {
+            id: Uuid::new_v4().to_string(),
             typ: ExpType::Void,
             kind: ExpKind::Op {
                 op,
@@ -670,6 +706,7 @@ fn componente(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
                 let value: i32 = token.lexemme.parse().unwrap();
                 _match(TokenType::INT, tokens, errors, true); // siempre es true
                 Some(TreeNode::new(Node::Exp {
+                    id: Uuid::new_v4().to_string(),
                     kind: ExpKind::Const { value },
                     typ: ExpType::Void,
                 }))
@@ -678,6 +715,7 @@ fn componente(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
                 let value: f32 = token.lexemme.parse().unwrap();
                 _match(TokenType::FLOAT, tokens, errors, true); // siempre es true
                 Some(TreeNode::new(Node::Exp {
+                    id: Uuid::new_v4().to_string(),
                     kind: ExpKind::ConstF { value },
                     typ: ExpType::Void,
                 }))
@@ -710,14 +748,17 @@ fn incremento(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
         let op = get_current_token(tokens).unwrap().token_type.clone(); // siempre es true
         _match(op.clone(), tokens, errors, true);
         Some(TreeNode::new(Node::Exp {
+            id: Uuid::new_v4().to_string(),
             typ: ExpType::Void,
             kind: ExpKind::Op {
                 op,
                 left: Box::new(Node::Exp {
+                    id: Uuid::new_v4().to_string(),
                     typ: ExpType::Void,
                     kind: ExpKind::Id { name },
                 }),
                 right: Box::new(Node::Exp {
+                    id: Uuid::new_v4().to_string(),
                     kind: ExpKind::Const { value: 1 },
                     typ: ExpType::Void,
                 }),
@@ -725,6 +766,7 @@ fn incremento(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
         }))
     } else {
         Some(TreeNode::new(Node::Exp {
+            id: Uuid::new_v4().to_string(),
             typ: ExpType::Void,
             kind: ExpKind::Id { name },
         }))

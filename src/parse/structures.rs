@@ -18,9 +18,19 @@ pub struct TreeNode {
 
 pub enum Node {
     // Tipo de Nodo
-    Stmt(StmtKind),
-    Exp { kind: ExpKind, typ: ExpType },
-    Decl(DeclKind),
+    Stmt {
+        kind: StmtKind,
+        id: String,
+    },
+    Exp {
+        kind: ExpKind,
+        typ: ExpType,
+        id: String,
+    },
+    Decl {
+        kind: DeclKind,
+        id: String,
+    },
 }
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum DeclKind {
