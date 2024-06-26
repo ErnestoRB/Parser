@@ -1,7 +1,16 @@
-main
-    {
+main {
+
+
         stdin x;
-        123
+        z = 123;
         a = 1;
-        111
+        
+        hola = 12;
+        if x > 1 and  {
+            a = 1;
+        }
+  
+
+
+        ax = 2;
     }
