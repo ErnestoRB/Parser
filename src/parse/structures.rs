@@ -71,7 +71,7 @@ pub enum ExpKind {
     Op {
         op: TokenType,
         left: Box<Node>,
-        right: Box<Node>,
+        right: Option<Box<Node>>,
     },
     Const {
         value: i32,

@@ -307,11 +307,11 @@ fn asignacion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
                                         kind: ExpKind::Id { name: name.clone() },
                                         id: Uuid::new_v4().to_string(),
                                     }),
-                                    right: Box::new(Node::Exp {
+                                    right: Some(Box::new(Node::Exp {
                                         typ: ExpType::Void,
                                         kind: ExpKind::Const { value: 1 },
                                         id: Uuid::new_v4().to_string(),
-                                    }),
+                                    })),
                                 },
                                 id: Uuid::new_v4().to_string(),
                             }),
@@ -568,6 +568,88 @@ fn sent_out(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Optio
 }
 
 fn expresion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option<TreeNode> {
+    let mut node = expresion_logica_and(tokens, errors)?;
+
+    if let Some(token) = get_current_token(tokens) {
+        match &token.token_type {
+            &TokenType::OR => {
+                let op = token.token_type.clone();
+                _match(op.clone(), tokens, errors, true); // siempre es true
+                let right = expresion_logica_and(tokens, errors)?;
+                node = TreeNode::new(Node::Exp {
+                    id: Uuid::new_v4().to_string(),
+                    typ: ExpType::Void,
+                    kind: ExpKind::Op {
+                        op,
+                        left: Box::new(node.node),
+                        right: Some(Box::new(right.node)),
+                    },
+                });
+            }
+            _ => {}
+        }
+    }
+
+    Some(node)
+}
+
+fn expresion_logica_and(
+    tokens: &mut VecDeque<Token>,
+    errors: &mut Vec<ParseError>,
+) -> Option<TreeNode> {
+    let mut node = expresion_logica_not(tokens, errors)?;
+
+    if let Some(token) = get_current_token(tokens) {
+        match &token.token_type {
+            &TokenType::AND => {
+                let op = token.token_type.clone();
+                _match(op.clone(), tokens, errors, true); // siempre es true
+                let right = expresion_logica_not(tokens, errors)?;
+                node = TreeNode::new(Node::Exp {
+                    id: Uuid::new_v4().to_string(),
+                    typ: ExpType::Void,
+                    kind: ExpKind::Op {
+                        op,
+                        left: Box::new(node.node),
+                        right: Some(Box::new(right.node)),
+                    },
+                });
+            }
+            _ => {}
+        }
+    }
+
+    Some(node)
+}
+
+fn expresion_logica_not(
+    tokens: &mut VecDeque<Token>,
+    errors: &mut Vec<ParseError>,
+) -> Option<TreeNode> {
+    match get_current_token(tokens) {
+        Some(token) => match &token.token_type {
+            &TokenType::NEG => {
+                let op = token.token_type.clone();
+                _match(op.clone(), tokens, errors, true); // siempre es true
+                let left = expresion_rel(tokens, errors)?;
+                Some(TreeNode::new(Node::Exp {
+                    id: Uuid::new_v4().to_string(),
+                    typ: ExpType::Void,
+                    kind: ExpKind::Op {
+                        // unario
+                        op,
+                        left: Box::new(left.node),
+                        right: None,
+                    },
+                }))
+            }
+            _ => expresion_rel(tokens, errors),
+        },
+        None => None,
+    }
+}
+
+fn expresion_rel(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option<TreeNode> {
     let mut node = expresion_simple(tokens, errors)?;
 
     if let Some(token) = get_current_token(tokens) {
@@ -587,7 +669,7 @@ fn expresion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
                     kind: ExpKind::Op {
                         op,
                         left: Box::new(node.node),
-                        right: Box::new(right.node),
+                        right: Some(Box::new(right.node)),
                     },
                 });
             }
@@ -619,7 +701,7 @@ fn expresion_simple(
                     kind: ExpKind::Op {
                         op,
                         left: Box::new(node.node),
-                        right: Box::new(right.node),
+                        right: Some(Box::new(right.node)),
                     },
                 });
             }
@@ -632,7 +714,7 @@ fn expresion_simple(
                         kind: ExpKind::Op {
                             op: TokenType::SUM,
                             left: Box::new(node.node),
-                            right: Box::new(right.node),
+                            right: Some(Box::new(right.node)),
                         },
                     });
                 } else {
@@ -665,7 +747,7 @@ fn termino(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option
             kind: ExpKind::Op {
                 op,
                 left: Box::new(node.node),
-                right: Box::new(right.node),
+                right: Some(Box::new(right.node)),
             },
         });
     }
@@ -687,7 +769,7 @@ fn factor(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option<
             kind: ExpKind::Op {
                 op,
                 left: Box::new(node.node),
-                right: Box::new(right.node),
+                right: Some(Box::new(right.node)),
             },
         });
     }
@@ -761,11 +843,11 @@ fn incremento(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opt
                     typ: ExpType::Void,
                     kind: ExpKind::Id { name },
                 }),
-                right: Box::new(Node::Exp {
+                right: Some(Box::new(Node::Exp {
                     id: Uuid::new_v4().to_string(),
                     kind: ExpKind::Const { value: 1 },
                     typ: ExpType::Void,
-                }),
+                })),
             },
         }))
     } else {

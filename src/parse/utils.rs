@@ -102,7 +102,9 @@ fn print_tree(node: &TreeNode, indent: usize) {
                 println!("{}  Left:", indentation);
                 print_tree_node(left, indent + 4);
                 println!("{}  Right:", indentation);
-                print_tree_node(right, indent + 4);
+                if let Some(right_node) = right {
+                    print_tree_node(&right_node, indent + 4);
+                }
             }
             ExpKind::Const { value } => {
                 println!("{}Exp: Const (Value: {})", indentation, value);

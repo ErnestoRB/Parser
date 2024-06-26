@@ -17,8 +17,11 @@ selección -> if expresión { listaSentencias } |if expresión { listaSentencias
 iteración -> while expresión { listaSentencias }
 repetición -> do { listaSentencias } while expresión ;
 sentIn -> cin id;
-sentOut -> cout expresión;
-expresión -> expresiónSimple relaciónOp expresiónSimple | expresiónSimple
+sentOut -> cout expresión
+expresión -> expresiónAnd OR expresiónAnd | expresiónAnd
+expresiónAnd ->  expresionNot AND expresionNot | expresionNot
+expresionNot -> NOT expresiónRel | Rel
+expresiónRel -> expresionSimple relaciónOp expresionSimple | expresionSimple
 relacionOp -> < |<= | > | >= | == | !=
 expresiónSimple -> expresiónSimple sumaOp termino | termino
 sumaOp -> + =
