@@ -136,18 +136,22 @@ fn declaracion_variable(
     tokens: &mut VecDeque<Token>,
     errors: &mut Vec<ParseError>,
 ) -> Option<TreeNode> {
+    let typ = get_current_token(tokens).unwrap().token_type.clone();
+    let typ2 = typ.clone();
     _match(
-        get_current_token(tokens).unwrap().token_type.clone(), // es seguro
-        tokens,
-        errors,
-        true,
+        typ, // es seguro
+        tokens, errors, true,
     );
-    let node = identificador(tokens, errors);
+    let node = identificador(tokens, errors, typ2);
     _match(TokenType::SCOL, tokens, errors, true);
     node
 }
 
-fn identificador(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option<TreeNode> {
+fn identificador(
+    tokens: &mut VecDeque<Token>,
+    errors: &mut Vec<ParseError>,
+    typ: TokenType,
+) -> Option<TreeNode> {
     match get_current_token(&tokens.clone()) {
         Some(token) => {
             if !_match(TokenType::ID, tokens, errors, true) {
@@ -155,7 +159,7 @@ fn identificador(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> 
             }
             let mut node = TreeNode::new(Node::Decl {
                 kind: DeclKind::Var {
-                    typ: token.token_type.clone(),
+                    typ: typ.clone(),
                     name: token.lexemme.clone(),
                 },
                 id: Uuid::new_v4().to_string(),
@@ -175,7 +179,7 @@ fn identificador(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> 
                 }
                 let sibling_node = TreeNode::new(Node::Decl {
                     kind: DeclKind::Var {
-                        typ: token.token_type.clone(),
+                        typ: typ.clone(),
                         name: token_op.unwrap().lexemme.clone(), // seguro
                     },
                     id: Uuid::new_v4().to_string(),
@@ -371,7 +375,7 @@ fn seleccion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
         });
         return None;
     }
-    
+
     let condition = expresion(tokens, errors);
     if condition.is_none() {
         errors.push(ParseError {
@@ -379,9 +383,13 @@ fn seleccion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
             expected_token_type: None,
             current_token: get_current_token(tokens).cloned(),
         });
-        avanzar_hasta(tokens, TokenType::RBRA);  // punto seguro
-        if let Some(Token { token_type: TokenType::ELSE, .. }) = get_current_token(tokens) {
-            avanzar_hasta(tokens, TokenType::RBRA);  // punto seguro adicional si hay else
+        avanzar_hasta(tokens, TokenType::RBRA); // punto seguro
+        if let Some(Token {
+            token_type: TokenType::ELSE,
+            ..
+        }) = get_current_token(tokens)
+        {
+            avanzar_hasta(tokens, TokenType::RBRA); // punto seguro adicional si hay else
         }
         return None;
     }
@@ -393,12 +401,16 @@ fn seleccion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
             current_token: get_current_token(tokens).cloned(),
         });
         avanzar_hasta(tokens, TokenType::RBRA); // punto seguro
-        if let Some(Token { token_type: TokenType::ELSE, .. }) = get_current_token(tokens) {
-            avanzar_hasta(tokens, TokenType::RBRA);  // punto seguro adicional si hay else
+        if let Some(Token {
+            token_type: TokenType::ELSE,
+            ..
+        }) = get_current_token(tokens)
+        {
+            avanzar_hasta(tokens, TokenType::RBRA); // punto seguro adicional si hay else
         }
         return None;
     }
-    
+
     let then_branch = lista_sentencias(tokens, errors);
     if !_match(TokenType::RBRA, tokens, errors, false) {
         errors.push(ParseError {
@@ -407,8 +419,12 @@ fn seleccion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
             current_token: get_current_token(tokens).cloned(),
         });
         avanzar_hasta(tokens, TokenType::RBRA); // punto seguro
-        if let Some(Token { token_type: TokenType::ELSE, .. }) = get_current_token(tokens) {
-            avanzar_hasta(tokens, TokenType::RBRA);  // punto seguro adicional si hay else
+        if let Some(Token {
+            token_type: TokenType::ELSE,
+            ..
+        }) = get_current_token(tokens)
+        {
+            avanzar_hasta(tokens, TokenType::RBRA); // punto seguro adicional si hay else
         }
         return None;
     }
