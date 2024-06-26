@@ -363,7 +363,7 @@ fn sent_expresion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) ->
 
 fn seleccion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Option<TreeNode> {
     if !_match(TokenType::IF, tokens, errors, false) {
-        // realmente no deberia pasar
+        // realmente no debería pasar
         errors.push(ParseError {
             message: "Se esperaba 'if'".to_string(),
             expected_token_type: Some(vec![TokenType::IF]),
@@ -371,16 +371,21 @@ fn seleccion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
         });
         return None;
     }
+    
     let condition = expresion(tokens, errors);
     if condition.is_none() {
         errors.push(ParseError {
-            message: "Se esperaba una expresion como condición del if".to_string(),
+            message: "Se esperaba una expresión como condición del if".to_string(),
             expected_token_type: None,
             current_token: get_current_token(tokens).cloned(),
         });
-        avanzar_hasta(tokens, TokenType::RBRA); // punto seguro
+        avanzar_hasta(tokens, TokenType::RBRA);  // punto seguro
+        if let Some(Token { token_type: TokenType::ELSE, .. }) = get_current_token(tokens) {
+            avanzar_hasta(tokens, TokenType::RBRA);  // punto seguro adicional si hay else
+        }
         return None;
     }
+
     if !_match(TokenType::LBRA, tokens, errors, false) {
         errors.push(ParseError {
             message: "Se esperaba '{'".to_string(),
@@ -388,8 +393,12 @@ fn seleccion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
             current_token: get_current_token(tokens).cloned(),
         });
         avanzar_hasta(tokens, TokenType::RBRA); // punto seguro
+        if let Some(Token { token_type: TokenType::ELSE, .. }) = get_current_token(tokens) {
+            avanzar_hasta(tokens, TokenType::RBRA);  // punto seguro adicional si hay else
+        }
         return None;
     }
+    
     let then_branch = lista_sentencias(tokens, errors);
     if !_match(TokenType::RBRA, tokens, errors, false) {
         errors.push(ParseError {
@@ -397,21 +406,42 @@ fn seleccion(tokens: &mut VecDeque<Token>, errors: &mut Vec<ParseError>) -> Opti
             expected_token_type: Some(vec![TokenType::RBRA]),
             current_token: get_current_token(tokens).cloned(),
         });
+        avanzar_hasta(tokens, TokenType::RBRA); // punto seguro
+        if let Some(Token { token_type: TokenType::ELSE, .. }) = get_current_token(tokens) {
+            avanzar_hasta(tokens, TokenType::RBRA);  // punto seguro adicional si hay else
+        }
         return None;
     }
+
     let else_branch = if let Some(Token {
         token_type: TokenType::ELSE,
         ..
     }) = get_current_token(tokens)
     {
         _match(TokenType::ELSE, tokens, errors, true);
-        _match(TokenType::LBRA, tokens, errors, true);
+        if !_match(TokenType::LBRA, tokens, errors, false) {
+            errors.push(ParseError {
+                message: "Se esperaba '{' después del 'else'".to_string(),
+                expected_token_type: None,
+                current_token: get_current_token(tokens).cloned(),
+            });
+            avanzar_hasta(tokens, TokenType::RBRA); // punto seguro adicional si hay else
+            return None;
+        }
         let r = lista_sentencias(tokens, errors);
-        _match(TokenType::RBRA, tokens, errors, true);
+        if !_match(TokenType::RBRA, tokens, errors, false) {
+            errors.push(ParseError {
+                message: "Se esperaba '}' después del bloque 'else'".to_string(),
+                expected_token_type: Some(vec![TokenType::RBRA]),
+                current_token: get_current_token(tokens).cloned(),
+            });
+            return None;
+        }
         r
     } else {
         None
     };
+
     Some(TreeNode::new(Node::Stmt {
         id: Uuid::new_v4().to_string(),
         kind: StmtKind::If {
