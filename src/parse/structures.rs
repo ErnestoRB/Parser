@@ -1,4 +1,4 @@
-use scanner::data::{Token, TokenType};
+use scanner::data::{Cursor, Token, TokenType};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -10,7 +10,7 @@ pub struct ParseError {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 
 pub struct TreeNode {
-    pub children: Vec<Box<TreeNode>>,
+    //    pub children: Vec<Box<TreeNode>>,
     pub sibling: Option<Box<TreeNode>>,
     pub node: Node,
 }
@@ -90,4 +90,14 @@ pub enum ExpType {
     Void,
     Integer,
     Boolean,
+}
+
+pub struct SymbolData {
+    pub mem_location: i32,
+    pub declaration: Cursor,
+    pub usages: Vec<SymbolReference>,
+}
+
+pub struct SymbolReference {
+    pub cursor: Cursor,
 }

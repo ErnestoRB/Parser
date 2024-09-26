@@ -1,7 +1,7 @@
 use std::{fs, io::Write, path::Path};
 
 use clap::{Args, Parser, Subcommand};
-use parser::parse;
+use parser::{create_symbol_table, parse, utils::print_sym_table};
 use scanner::tokenize_file;
 
 #[derive(Parser)]
@@ -19,6 +19,9 @@ struct Cli {
     #[arg(short, long)]
     /// Output file to a json
     json: bool,
+    /// Output symboltable to stdout
+    #[arg(long)]
+    symbols: bool,
 }
 
 #[derive(Subcommand, Clone)]
@@ -136,6 +139,11 @@ fn main() {
                             }
                         }
                         root.print(); // imprimir a stdout
+
+                        if cli.symbols {
+                            let table = create_symbol_table(&root);
+                            print_sym_table(table.0);
+                        }
                     }
                     if !errors.is_empty() {
                         for err in errors {
