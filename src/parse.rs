@@ -1,7 +1,7 @@
 pub mod structures;
 pub mod utils;
 
-use scanner::data::{Token, TokenType};
+use scanner::data::{Cursor, Token, TokenType};
 use std::collections::VecDeque;
 use structures::{DeclKind, ExpKind, ExpType, Node, ParseError, StmtKind, TreeNode};
 use uuid::Uuid;
@@ -9,6 +9,7 @@ use uuid::Uuid;
 struct Parser {
     tokens: VecDeque<Token>,
     errors: Vec<ParseError>,
+    current_cursor: Option<Cursor>,
 }
 
 pub fn parse(tokens: Vec<Token>) -> (Option<TreeNode>, Vec<ParseError>) {
@@ -18,9 +19,11 @@ pub fn parse(tokens: Vec<Token>) -> (Option<TreeNode>, Vec<ParseError>) {
 
 impl Parser {
     pub fn new(tokens: VecDeque<Token>) -> Self {
+        let current_cursor = tokens.front().map(|t| t.start.clone());
         Parser {
             errors: vec![],
             tokens,
+            current_cursor,
         }
     }
 
@@ -63,6 +66,7 @@ impl Parser {
     }
 
     fn get_next_token(&mut self) -> Option<Token> {
+        self.current_cursor = self.tokens.front().map(|t| t.start.clone());
         self.tokens.pop_front()
     }
 
