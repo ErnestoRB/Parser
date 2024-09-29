@@ -95,11 +95,14 @@ pub enum ExpType {
     Boolean,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct SymbolData {
     pub mem_location: i32,
     pub declaration: Cursor,
     pub usages: Vec<SymbolReference>,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 
 pub struct SymbolReference {
     pub cursor: Cursor,
