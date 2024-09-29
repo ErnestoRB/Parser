@@ -15,7 +15,6 @@ pub fn create_symbol_table(node: &TreeNode) -> (HashMap<String, SymbolData>, Vec
         } = node
         {
             if let crate::structures::ExpKind::Id { name } = kind {
-                println!("{}", name);
                 if !map.contains_key(name) {
                     errors.push(SymbolError {
                         message: "Uso antes de declaración".to_string(),
