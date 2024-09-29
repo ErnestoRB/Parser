@@ -103,6 +103,12 @@ pub struct SymbolData {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct SymbolError {
+    pub message: String,
+    pub cursor: Cursor,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 
 pub struct SymbolReference {
     pub cursor: Cursor,

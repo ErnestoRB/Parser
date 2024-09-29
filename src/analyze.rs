@@ -2,10 +2,11 @@ use std::collections::HashMap;
 
 use crate::{
     parse::structures::{SymbolData, SymbolReference},
-    structures::{DeclKind, ExpKind, Node, StmtKind, TreeNode},
+    structures::{DeclKind, ExpKind, Node, StmtKind, SymbolError, TreeNode},
 };
 
-pub fn create_symbol_table(node: &TreeNode) -> (HashMap<String, SymbolData>, ()) {
+pub fn create_symbol_table(node: &TreeNode) -> (HashMap<String, SymbolData>, Vec<SymbolError>) {
+    let mut errors: Vec<SymbolError> = vec![];
     let mut location = 0;
     let mut map: HashMap<String, SymbolData> = HashMap::new();
     node.pre_order_traversal(&mut |node: &Node| {
@@ -16,7 +17,10 @@ pub fn create_symbol_table(node: &TreeNode) -> (HashMap<String, SymbolData>, ())
             if let crate::structures::ExpKind::Id { name } = kind {
                 println!("{}", name);
                 if !map.contains_key(name) {
-                    todo!("Error de uso antes de declaración")
+                    errors.push(SymbolError {
+                        message: "Uso antes de declaración".to_string(),
+                        cursor: cursor.clone().unwrap(),
+                    });
                 } else {
                     match map.get_mut(name) {
                         Some(data) => (*data).usages.push(SymbolReference {
@@ -31,7 +35,10 @@ pub fn create_symbol_table(node: &TreeNode) -> (HashMap<String, SymbolData>, ())
         if let Node::Decl { kind, cursor, .. } = node {
             if let DeclKind::Var { name, .. } = kind {
                 if map.contains_key(name) {
-                    todo!("Error de doble declaración")
+                    errors.push(SymbolError {
+                        message: "Doble declaración".to_string(),
+                        cursor: cursor.clone().unwrap(),
+                    });
                 } else {
                     map.insert(
                         name.to_owned(),
@@ -49,7 +56,10 @@ pub fn create_symbol_table(node: &TreeNode) -> (HashMap<String, SymbolData>, ())
         if let Node::Stmt { kind, cursor, .. } = node {
             if let StmtKind::Assign { name, .. } = kind {
                 if !map.contains_key(name) {
-                    todo!("Error de uso antes de declaración")
+                    errors.push(SymbolError {
+                        message: "Uso antes de declaración".to_string(),
+                        cursor: cursor.clone().unwrap(),
+                    });
                 } else {
                     match map.get_mut(name) {
                         Some(data) => (*data).usages.push(SymbolReference {
@@ -61,7 +71,10 @@ pub fn create_symbol_table(node: &TreeNode) -> (HashMap<String, SymbolData>, ())
             }
             if let StmtKind::In { name, .. } = kind {
                 if !map.contains_key(name) {
-                    todo!("Error de uso antes de declaración")
+                    errors.push(SymbolError {
+                        message: "Uso antes de declaración".to_string(),
+                        cursor: cursor.clone().unwrap(),
+                    });
                 } else {
                     match map.get_mut(name) {
                         Some(data) => (*data).usages.push(SymbolReference {
@@ -74,7 +87,7 @@ pub fn create_symbol_table(node: &TreeNode) -> (HashMap<String, SymbolData>, ())
         }
     });
 
-    (map, ())
+    (map, errors)
 }
 
 pub fn debug(node: &TreeNode) {
