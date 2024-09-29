@@ -14,13 +14,12 @@ impl TreeNode {
     /*   pub fn add_child(&mut self, child: TreeNode) {
         self.children.push(Box::new(child));
     } */
-
     // Función para recorrer el árbol de manera preorden
     pub fn pre_order_traversal(&self, visit: &mut dyn FnMut(&Node)) {
         // Primero visitamos el nodo actual
         visit(&self.node);
 
-        // Dependiendo del tipo de nodo, recorremos sus "hijos" implícitos
+        // Dependiendo del tipo de nodo, recorremos sus hijos
         match &self.node {
             // Si el nodo es una sentencia (Stmt), verificamos su tipo
             Node::Stmt { kind, .. } => match kind {
@@ -29,8 +28,8 @@ impl TreeNode {
                     then_branch,
                     else_branch,
                 } => {
-                    // Visitamos la condición (Exp)
-                    visit(condition);
+                    // Visitamos la condición (que es un TreeNode) de manera recursiva
+                    condition.pre_order_traversal(visit);
                     // Si existe el bloque "then", lo recorremos
                     if let Some(then) = then_branch {
                         then.pre_order_traversal(visit);
@@ -41,8 +40,8 @@ impl TreeNode {
                     }
                 }
                 StmtKind::While { condition, body } => {
-                    // Visitamos la condición (Exp)
-                    visit(condition);
+                    // Visitamos la condición (que es un TreeNode) de manera recursiva
+                    condition.pre_order_traversal(visit);
                     // Si existe el cuerpo, lo recorremos
                     if let Some(body) = body {
                         body.pre_order_traversal(visit);
@@ -53,33 +52,41 @@ impl TreeNode {
                     if let Some(body) = body {
                         body.pre_order_traversal(visit);
                     }
-                    // Luego visitamos la condición (Exp)
+                    // Luego visitamos la condición (que es un Node) directamente
                     visit(condition);
                 }
                 StmtKind::Assign { value, .. } => {
-                    // Visitamos el valor de la asignación (Exp)
-                    visit(value);
+                    // Visitamos el valor de la asignación (que es un TreeNode) de manera recursiva
+                    value.pre_order_traversal(visit);
                 }
-                StmtKind::In { .. } | StmtKind::Out { .. } => {
-                    // Si es un Stmt de entrada o salida, no tiene hijos
+                StmtKind::In { .. } => {
+                    // No tiene hijos
+                }
+                StmtKind::Out { expression } => {
+                    // Para el caso de "Out", visitamos la expresión
+                    expression.pre_order_traversal(visit);
                 }
             },
             // Si el nodo es una expresión (Exp), verificamos su tipo
             Node::Exp { kind, .. } => match kind {
                 ExpKind::Op { left, right, .. } => {
-                    // Visitamos el lado izquierdo (siempre existe)
-                    visit(left);
-                    // Si hay un lado derecho, también lo visitamos
+                    // Visitamos el lado izquierdo de manera recursiva
+                    left.pre_order_traversal(visit);
+                    // Si hay un lado derecho, también lo visitamos de manera recursiva
                     if let Some(right) = right {
-                        visit(right);
+                        right.pre_order_traversal(visit);
                     }
                 }
                 ExpKind::Const { .. } | ExpKind::ConstF { .. } | ExpKind::Id { .. } => {
-                    // No hay hijos en estos casos
+                    // Estos nodos no tienen hijos
                 }
             },
-            // Si el nodo es una declaración (Decl), no tiene hijos implícitos
-            Node::Decl { .. } => {}
+            // Si el nodo es una declaración (Decl), verificamos el tipo
+            Node::Decl { kind, .. } => match kind {
+                DeclKind::Var { .. } => {
+                    // No hay hijos en este caso
+                }
+            },
         }
 
         // Finalmente, recorremos los hermanos si existen
@@ -113,15 +120,17 @@ impl TreeNode {
     }
 }
 
+impl Node {}
+
 fn print_tree(node: &TreeNode, indent: usize) {
     let indentation = " ".repeat(indent);
     match &node.node {
-        Node::Decl { kind, id: _ } => match kind {
+        Node::Decl { kind, .. } => match kind {
             DeclKind::Var { typ, name } => {
                 println!("{}Decl: Var (Type: {:?}, Name: {})", indentation, typ, name);
             }
         },
-        Node::Stmt { kind, id: _ } => match kind {
+        Node::Stmt { kind, .. } => match kind {
             StmtKind::If {
                 condition,
                 then_branch,
@@ -129,7 +138,7 @@ fn print_tree(node: &TreeNode, indent: usize) {
             } => {
                 println!("{}Stmt: If", indentation);
                 println!("{}  Condition:", indentation);
-                print_tree_node(condition, indent + 4);
+                print_tree(condition, indent + 4);
                 println!("{}  Then Branch:", indentation);
                 if let Some(then) = then_branch {
                     print_tree(then, indent + 4);
@@ -142,7 +151,7 @@ fn print_tree(node: &TreeNode, indent: usize) {
             StmtKind::While { condition, body } => {
                 println!("{}Stmt: While", indentation);
                 println!("{}  Condition:", indentation);
-                print_tree_node(condition, indent + 4);
+                print_tree(condition, indent + 4);
                 println!("{}  Body:", indentation);
                 if let Some(body) = body {
                     print_tree(body, indent + 4);
@@ -160,7 +169,7 @@ fn print_tree(node: &TreeNode, indent: usize) {
             StmtKind::Assign { name, value } => {
                 println!("{}Stmt: Assign (Name: {})", indentation, name);
                 println!("{}  Value:", indentation);
-                print_tree_node(value, indent + 4);
+                print_tree(value, indent + 4);
             }
             StmtKind::In { name } => {
                 println!("{}Stmt: In (Name: {})", indentation, name);
@@ -168,17 +177,17 @@ fn print_tree(node: &TreeNode, indent: usize) {
             StmtKind::Out { expression } => {
                 println!("{}Stmt: Out", indentation);
                 println!("{}  Expression:", indentation);
-                print_tree_node(expression, indent + 4);
+                print_tree(expression, indent + 4);
             }
         },
-        Node::Exp { kind, typ, id: _ } => match kind {
+        Node::Exp { kind, .. } => match kind {
             ExpKind::Op { op, left, right } => {
                 println!("{}Exp: Op ({:?})", indentation, op);
                 println!("{}  Left:", indentation);
-                print_tree_node(left, indent + 4);
+                print_tree(left, indent + 4);
                 println!("{}  Right:", indentation);
                 if let Some(right_node) = right {
-                    print_tree_node(&right_node, indent + 4);
+                    print_tree(&right_node, indent + 4);
                 }
             }
             ExpKind::Const { value } => {
@@ -213,10 +222,10 @@ pub fn print_sym_table(table: HashMap<String, SymbolData>) {
     for (k, v) in table.iter() {
         print!(
             "Variable:  {}  - ({},{}) | Location {} | Usages: ",
-            k, v.declaration.col, v.declaration.lin, v.mem_location
+            k, v.declaration.lin, v.declaration.col, v.mem_location
         );
         for usage in v.usages.iter() {
-            print!("({}, {}),", usage.cursor.col, usage.cursor.lin)
+            print!("({}, {}),", usage.cursor.lin, usage.cursor.col,)
         }
         println!();
     }

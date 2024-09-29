@@ -1,7 +1,7 @@
 use std::{fs, io::Write, path::Path};
 
 use clap::{Args, Parser, Subcommand};
-use parser::{create_symbol_table, parse, utils::print_sym_table};
+use parser::{create_symbol_table, debug, parse, utils::print_sym_table};
 use scanner::tokenize_file;
 
 #[derive(Parser)]
@@ -141,6 +141,7 @@ fn main() {
                         root.print(); // imprimir a stdout
 
                         if cli.symbols {
+                            // debug(&root);
                             let table = create_symbol_table(&root);
                             print_sym_table(table.0);
                         }

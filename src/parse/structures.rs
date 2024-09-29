@@ -21,15 +21,18 @@ pub enum Node {
     Stmt {
         kind: StmtKind,
         id: String,
+        cursor: Option<Cursor>,
     },
     Exp {
         kind: ExpKind,
         typ: ExpType,
         id: String,
+        cursor: Option<Cursor>,
     },
     Decl {
         kind: DeclKind,
         id: String,
+        cursor: Option<Cursor>,
     },
 }
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -41,12 +44,12 @@ pub enum DeclKind {
 pub enum StmtKind {
     // Sentencias soportadas
     If {
-        condition: Box<Node>,
+        condition: Box<TreeNode>,
         then_branch: Option<Box<TreeNode>>,
         else_branch: Option<Box<TreeNode>>,
     },
     While {
-        condition: Box<Node>,
+        condition: Box<TreeNode>,
         body: Option<Box<TreeNode>>,
     },
     Do {
@@ -55,13 +58,13 @@ pub enum StmtKind {
     },
     Assign {
         name: String,
-        value: Box<Node>,
+        value: Box<TreeNode>,
     },
     In {
         name: String,
     },
     Out {
-        expression: Box<Node>,
+        expression: Box<TreeNode>,
     },
 }
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -70,8 +73,8 @@ pub enum ExpKind {
     // Uso de operadores, constantes e identificadores
     Op {
         op: TokenType,
-        left: Box<Node>,
-        right: Option<Box<Node>>,
+        left: Box<TreeNode>,
+        right: Option<Box<TreeNode>>,
     },
     Const {
         value: i32,

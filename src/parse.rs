@@ -168,12 +168,14 @@ impl Parser {
                 if !self._match(TokenType::ID, true) {
                     return None;
                 }
+                let cursor = self.current_cursor.clone();
                 let mut node = TreeNode::new(Node::Decl {
                     kind: DeclKind::Var {
                         typ: typ.clone(),
                         name: token.lexemme.clone(),
                     },
                     id: Uuid::new_v4().to_string(),
+                    cursor,
                 });
                 let mut current_node = &mut node;
 
@@ -187,7 +189,10 @@ impl Parser {
                     if !self._match(TokenType::ID, true) || token_op.is_none() {
                         break;
                     }
+                    let cursor = self.current_cursor.clone();
+
                     let sibling_node = TreeNode::new(Node::Decl {
+                        cursor,
                         kind: DeclKind::Var {
                             typ: typ.clone(),
                             name: token_op.unwrap().lexemme.clone(), // seguro
@@ -294,6 +299,7 @@ impl Parser {
             self.avanzar_hasta(TokenType::SCOL);
             return None;
         }
+        let cursor = self.current_cursor.clone();
 
         match self.get_current_token().cloned() {
             Some(token) => {
@@ -306,26 +312,30 @@ impl Parser {
                         };
                         self._match(token.token_type.clone(), true); // ++ o --
                         let node = Some(TreeNode::new(Node::Stmt {
+                            cursor: cursor.clone(),
                             id: Uuid::new_v4().to_string(),
                             kind: StmtKind::Assign {
                                 name: name.clone(),
-                                value: Box::new(Node::Exp {
+                                value: Box::new(TreeNode::new(Node::Exp {
+                                    cursor: cursor.clone(),
                                     typ: ExpType::Void,
                                     kind: ExpKind::Op {
                                         op: operacion,
-                                        left: Box::new(Node::Exp {
+                                        left: Box::new(TreeNode::new(Node::Exp {
+                                            cursor,
                                             typ: ExpType::Void,
                                             kind: ExpKind::Id { name: name.clone() },
                                             id: Uuid::new_v4().to_string(),
-                                        }),
-                                        right: Some(Box::new(Node::Exp {
+                                        })),
+                                        right: Some(Box::new(TreeNode::new(Node::Exp {
+                                            cursor: None,
                                             typ: ExpType::Void,
                                             kind: ExpKind::Const { value: 1 },
                                             id: Uuid::new_v4().to_string(),
-                                        })),
+                                        }))),
                                     },
                                     id: Uuid::new_v4().to_string(),
-                                }),
+                                })),
                             },
                         }));
                         self._match(TokenType::SCOL, true);
@@ -349,10 +359,11 @@ impl Parser {
         }
         let value = self.sent_expresion()?;
         Some(TreeNode::new(Node::Stmt {
+            cursor,
             id: Uuid::new_v4().to_string(),
             kind: StmtKind::Assign {
                 name,
-                value: Box::new(value.node),
+                value: Box::new(value),
             },
         }))
     }
@@ -385,6 +396,7 @@ impl Parser {
             });
             return None;
         }
+        let cursor = self.current_cursor.clone();
 
         let condition = self.expresion();
         if condition.is_none() {
@@ -474,9 +486,10 @@ impl Parser {
         };
 
         Some(TreeNode::new(Node::Stmt {
+            cursor,
             id: Uuid::new_v4().to_string(),
             kind: StmtKind::If {
-                condition: Box::new(condition.unwrap().node),
+                condition: Box::new(condition.unwrap()),
                 then_branch: then_branch.map(|n| Box::new(n)),
                 else_branch: else_branch.map(|n| Box::new(n)),
             },
@@ -494,6 +507,8 @@ impl Parser {
             });
             return None;
         }
+        let cursor = self.current_cursor.clone();
+
         match self.expresion() {
             Some(condition) => {
                 if !self._match(TokenType::LBRA, false) {
@@ -520,9 +535,10 @@ impl Parser {
                     return None;
                 }
                 Some(TreeNode::new(Node::Stmt {
+                    cursor,
                     id: Uuid::new_v4().to_string(),
                     kind: StmtKind::While {
-                        condition: Box::new(condition.node),
+                        condition: Box::new(condition),
                         body: body.map(|n| Box::new(n)),
                     },
                 }))
@@ -545,6 +561,7 @@ impl Parser {
             });
             return None;
         }
+        let cursor = self.current_cursor.clone();
         if !self._match(TokenType::LBRA, false) {
             let token = self.get_current_token().cloned();
             self.errors.push(ParseError {
@@ -581,6 +598,7 @@ impl Parser {
             Some(condition) => {
                 self._match(TokenType::SCOL, false);
                 Some(TreeNode::new(Node::Stmt {
+                    cursor,
                     id: Uuid::new_v4().to_string(),
                     kind: StmtKind::Do {
                         body: body.map(|n| Box::new(n)),
@@ -597,6 +615,7 @@ impl Parser {
 
     fn sent_in(&mut self) -> Option<TreeNode> {
         self._match(TokenType::STDIN, true); // realmente no deberia pasar
+        let cursor = self.current_cursor.clone();
         let curr_token = self.get_current_token().cloned();
         if !self._match(TokenType::ID, true) {
             self.avanzar_hasta(TokenType::SCOL);
@@ -608,6 +627,7 @@ impl Parser {
         let name = curr_token.unwrap().lexemme.clone();
         self._match(TokenType::SCOL, true);
         Some(TreeNode::new(Node::Stmt {
+            cursor,
             id: Uuid::new_v4().to_string(),
             kind: StmtKind::In { name },
         }))
@@ -615,6 +635,7 @@ impl Parser {
 
     fn sent_out(&mut self) -> Option<TreeNode> {
         self._match(TokenType::STDOUT, true); // realmente no deberia pasar
+        let cursor = self.current_cursor.clone();
         let expression = self.expresion();
         if expression.is_none() {
             let token = self.get_current_token().cloned();
@@ -628,9 +649,10 @@ impl Parser {
         }
         self._match(TokenType::SCOL, true);
         Some(TreeNode::new(Node::Stmt {
+            cursor,
             id: Uuid::new_v4().to_string(),
             kind: StmtKind::Out {
-                expression: Box::new(expression.unwrap().node),
+                expression: Box::new(expression.unwrap()),
             },
         }))
     }
@@ -638,19 +660,21 @@ impl Parser {
     fn expresion(&mut self) -> Option<TreeNode> {
         let mut node = self.expresion_logica_and()?;
 
-        if let Some(token) = self.get_current_token() {
+        if let Some(token) = self.get_current_token().cloned() {
             match &token.token_type {
                 &TokenType::OR => {
                     let op = token.token_type.clone();
                     self._match(op.clone(), true); // siempre es true
+                    let cursor = self.current_cursor.clone();
                     let right = self.expresion_logica_and()?;
                     node = TreeNode::new(Node::Exp {
+                        cursor,
                         id: Uuid::new_v4().to_string(),
                         typ: ExpType::Void,
                         kind: ExpKind::Op {
                             op,
-                            left: Box::new(node.node),
-                            right: Some(Box::new(right.node)),
+                            left: Box::new(node),
+                            right: Some(Box::new(right)),
                         },
                     });
                 }
@@ -664,19 +688,21 @@ impl Parser {
     fn expresion_logica_and(&mut self) -> Option<TreeNode> {
         let mut node = self.expresion_logica_not()?;
 
-        if let Some(token) = self.get_current_token() {
+        if let Some(token) = self.get_current_token().cloned() {
             match &token.token_type {
                 &TokenType::AND => {
                     let op = token.token_type.clone();
                     self._match(op.clone(), true); // siempre es true
+                    let cursor = self.current_cursor.clone();
                     let right = self.expresion_logica_not()?;
                     node = TreeNode::new(Node::Exp {
+                        cursor,
                         id: Uuid::new_v4().to_string(),
                         typ: ExpType::Void,
                         kind: ExpKind::Op {
                             op,
-                            left: Box::new(node.node),
-                            right: Some(Box::new(right.node)),
+                            left: Box::new(node),
+                            right: Some(Box::new(right)),
                         },
                     });
                 }
@@ -693,14 +719,16 @@ impl Parser {
                 &TokenType::NEG => {
                     let op = token.token_type.clone();
                     self._match(op.clone(), true); // siempre es true
+                    let cursor = self.current_cursor.clone();
                     let left = self.expresion_rel()?;
                     Some(TreeNode::new(Node::Exp {
+                        cursor,
                         id: Uuid::new_v4().to_string(),
                         typ: ExpType::Void,
                         kind: ExpKind::Op {
                             // unario
                             op,
-                            left: Box::new(left.node),
+                            left: Box::new(left),
                             right: None,
                         },
                     }))
@@ -714,7 +742,7 @@ impl Parser {
     fn expresion_rel(&mut self) -> Option<TreeNode> {
         let mut node = self.expresion_simple()?;
 
-        if let Some(token) = self.get_current_token() {
+        if let Some(token) = self.get_current_token().cloned() {
             match &token.token_type {
                 &TokenType::LT
                 | &TokenType::LE
@@ -724,14 +752,16 @@ impl Parser {
                 | &TokenType::NE => {
                     let op = token.token_type.clone();
                     self._match(op.clone(), true); // siempre es true
+                    let cursor = self.current_cursor.clone();
                     let right = self.expresion_simple()?;
                     node = TreeNode::new(Node::Exp {
+                        cursor,
                         id: Uuid::new_v4().to_string(),
                         typ: ExpType::Void,
                         kind: ExpKind::Op {
                             op,
-                            left: Box::new(node.node),
-                            right: Some(Box::new(right.node)),
+                            left: Box::new(node),
+                            right: Some(Box::new(right)),
                         },
                     });
                 }
@@ -753,27 +783,31 @@ impl Parser {
             match op {
                 TokenType::SUM | TokenType::MIN => {
                     self._match(op.clone(), true); // siempre es true
+                    let cursor = self.current_cursor.clone();
                     let right = self.termino()?;
                     node = TreeNode::new(Node::Exp {
+                        cursor,
                         id: Uuid::new_v4().to_string(),
                         typ: ExpType::Void,
                         kind: ExpKind::Op {
                             op,
-                            left: Box::new(node.node),
-                            right: Some(Box::new(right.node)),
+                            left: Box::new(node),
+                            right: Some(Box::new(right)),
                         },
                     });
                 }
                 TokenType::INT | TokenType::FLOAT => {
                     if curr.lexemme.contains('+') || curr.lexemme.contains('-') {
+                        let cursor = self.current_cursor.clone();
                         let right = self.termino()?;
                         node = TreeNode::new(Node::Exp {
+                            cursor,
                             id: Uuid::new_v4().to_string(),
                             typ: ExpType::Void,
                             kind: ExpKind::Op {
                                 op: TokenType::SUM,
-                                left: Box::new(node.node),
-                                right: Some(Box::new(right.node)),
+                                left: Box::new(node),
+                                right: Some(Box::new(right)),
                             },
                         });
                     } else {
@@ -799,14 +833,17 @@ impl Parser {
         ) {
             let op = self.get_current_token().unwrap().token_type.clone();
             self._match(op.clone(), true);
+            let cursor = self.current_cursor.clone();
             let right = self.factor()?;
+
             node = TreeNode::new(Node::Exp {
+                cursor,
                 id: Uuid::new_v4().to_string(),
                 typ: ExpType::Void,
                 kind: ExpKind::Op {
                     op,
-                    left: Box::new(node.node),
-                    right: Some(Box::new(right.node)),
+                    left: Box::new(node),
+                    right: Some(Box::new(right)),
                 },
             });
         }
@@ -820,15 +857,17 @@ impl Parser {
             TokenType::POWER
         ) {
             let op = self.get_current_token().unwrap().token_type.clone();
-            self._match(op.clone(), true);
             let right = self.componente()?;
+            self._match(op.clone(), true);
+            let cursor = self.current_cursor.clone();
             node = TreeNode::new(Node::Exp {
+                cursor,
                 id: Uuid::new_v4().to_string(),
                 typ: ExpType::Void,
                 kind: ExpKind::Op {
                     op,
-                    left: Box::new(node.node),
-                    right: Some(Box::new(right.node)),
+                    left: Box::new(node),
+                    right: Some(Box::new(right)),
                 },
             });
         }
@@ -840,6 +879,7 @@ impl Parser {
             Some(token) => match token.token_type {
                 TokenType::LPAR => {
                     self._match(TokenType::LPAR, true); // siempre es true
+                    let cursor = self.current_cursor.clone();
                     let node = self.expresion()?;
                     if !self._match(TokenType::RPAR, true) {
                         // dejamos que quien use la expresion se encargue de definir el punto seguro :)
@@ -850,7 +890,9 @@ impl Parser {
                 TokenType::INT => {
                     let value: i32 = token.lexemme.parse().unwrap();
                     self._match(TokenType::INT, true); // siempre es true
+                    let cursor = self.current_cursor.clone();
                     Some(TreeNode::new(Node::Exp {
+                        cursor,
                         id: Uuid::new_v4().to_string(),
                         kind: ExpKind::Const { value },
                         typ: ExpType::Void,
@@ -859,7 +901,9 @@ impl Parser {
                 TokenType::FLOAT => {
                     let value: f32 = token.lexemme.parse().unwrap();
                     self._match(TokenType::FLOAT, true); // siempre es true
+                    let cursor = self.current_cursor.clone();
                     Some(TreeNode::new(Node::Exp {
+                        cursor,
                         id: Uuid::new_v4().to_string(),
                         kind: ExpKind::ConstF { value },
                         typ: ExpType::Void,
@@ -886,31 +930,38 @@ impl Parser {
     fn incremento(&mut self) -> Option<TreeNode> {
         let name = self.get_current_token().unwrap().lexemme.clone();
         self._match(TokenType::ID, true); // siempre es true
+        let cursor = self.current_cursor.clone();
         if matches!(
             self.get_current_token().unwrap().token_type,
             TokenType::INC | TokenType::DEC
         ) {
             let op = self.get_current_token().unwrap().token_type.clone(); // siempre es true
             self._match(op.clone(), true);
+            let cursor2 = self.current_cursor.clone();
+
             Some(TreeNode::new(Node::Exp {
+                cursor: cursor.clone(),
                 id: Uuid::new_v4().to_string(),
                 typ: ExpType::Void,
                 kind: ExpKind::Op {
                     op,
-                    left: Box::new(Node::Exp {
+                    left: Box::new(TreeNode::new(Node::Exp {
+                        cursor: cursor2,
                         id: Uuid::new_v4().to_string(),
                         typ: ExpType::Void,
                         kind: ExpKind::Id { name },
-                    }),
-                    right: Some(Box::new(Node::Exp {
+                    })),
+                    right: Some(Box::new(TreeNode::new(Node::Exp {
+                        cursor: None,
                         id: Uuid::new_v4().to_string(),
                         kind: ExpKind::Const { value: 1 },
                         typ: ExpType::Void,
-                    })),
+                    }))),
                 },
             }))
         } else {
             Some(TreeNode::new(Node::Exp {
+                cursor,
                 id: Uuid::new_v4().to_string(),
                 typ: ExpType::Void,
                 kind: ExpKind::Id { name },
