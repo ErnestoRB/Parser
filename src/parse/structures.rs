@@ -100,6 +100,7 @@ pub struct SymbolData {
     pub mem_location: i32,
     pub declaration: Cursor,
     pub usages: Vec<SymbolReference>,
+    pub value: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

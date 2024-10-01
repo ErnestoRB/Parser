@@ -144,7 +144,7 @@ fn main() {
                             let (symbol_table, errors) = create_symbol_table(&root);
                             print_sym_table(symbol_table);
                             if !errors.is_empty() {
-                                eprintln!("Errores en la tabla de símbolos:");
+                                eprintln!("Errores:");
                                 for error in errors {
                                     eprintln!(
                                         "ERROR: {} en la posición {:?}",
