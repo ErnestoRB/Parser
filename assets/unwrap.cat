@@ -10,6 +10,14 @@ main {
             a = 1;
         }
   
+        while a > 3 and {
+            stdout c;
+        }
+
+        do {
+            stdin x;
+        }
+        while a < 0 and a > 1;
 
 
         ax = 2;

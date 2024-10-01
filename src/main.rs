@@ -141,9 +141,17 @@ fn main() {
                         root.print(); // imprimir a stdout
 
                         if cli.symbols {
-                            // debug(&root);
-                            let table = create_symbol_table(&root);
-                            print_sym_table(table.0);
+                            let (symbol_table, errors) = create_symbol_table(&root);
+                            print_sym_table(symbol_table);
+                            if !errors.is_empty() {
+                                eprintln!("Errores en la tabla de símbolos:");
+                                for error in errors {
+                                    eprintln!(
+                                        "ERROR: {} en la posición {:?}",
+                                        error.message, error.cursor
+                                    );
+                                }
+                            }
                         }
                     }
                     if !errors.is_empty() {
