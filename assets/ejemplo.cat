@@ -38,7 +38,12 @@ main {
     integer gg;
     gg=1;
 
-    while(l==0){
+    integer zz;
+    zz=2;
+    x=zz+3;
+    x=zz/0;
+
+    while(l==zz){
         stdin mas;
         stdout gg;
     }
