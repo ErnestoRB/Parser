@@ -1,6 +1,13 @@
 use scanner::data::{Cursor, Token, TokenType};
 use serde::{Deserialize, Serialize};
 
+//Valor para nodo exp ya sea Int o Float
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub enum NodeValue {
+    Int(i32),
+    Float(f32),
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct ParseError {
     pub current_token: Option<Token>,
@@ -28,6 +35,7 @@ pub enum Node {
         typ: ExpType,
         id: String,
         cursor: Option<Cursor>,
+        val: Option<NodeValue>
     },
     Decl {
         kind: DeclKind,
@@ -100,7 +108,6 @@ pub struct SymbolData {
     pub mem_location: i32,
     pub declaration: Cursor,
     pub usages: Vec<SymbolReference>,
-    pub value: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

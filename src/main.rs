@@ -1,7 +1,9 @@
 use std::{fs, io::Write, path::Path};
 
 use clap::{Args, Parser, Subcommand};
-use parser::{create_symbol_table, debug, parse, utils::print_sym_table};
+use parser::{
+    create_symbol_table, debug, evaluate_arithmetic_expressions, parse, utils::print_sym_table,
+};
 use scanner::tokenize_file;
 
 #[derive(Parser)]
@@ -146,6 +148,19 @@ fn main() {
                             if !errors.is_empty() {
                                 eprintln!("Errores:");
                                 for error in errors {
+                                    eprintln!(
+                                        "ERROR: {} en la posición {:?}",
+                                        error.message, error.cursor
+                                    );
+                                }
+                            }
+
+                            let (mut symbol_table, errors) = create_symbol_table(&root); // Hacer mutable la tabla de símbolos
+                            let eval_errors =
+                                evaluate_arithmetic_expressions(&root, &mut symbol_table);
+                            if !eval_errors.is_empty() {
+                                eprintln!("Errores de evaluación:");
+                                for error in eval_errors {
                                     eprintln!(
                                         "ERROR: {} en la posición {:?}",
                                         error.message, error.cursor

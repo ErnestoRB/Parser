@@ -15,13 +15,13 @@ main {
     y=5+3-2*4/7-9;
     z=8/2+15*4;
     y=14.54;
-    if(2>3) {
+    if(u>3) {
         y=a+3;
     }  else {
-        if(4>2) {
+        if(a>2/0) {
             b=3;
         } else {
-            b=5.0;
+            hh=5.0;
         }
         y=y+1;
     }
@@ -29,14 +29,17 @@ main {
     x=3+4;
     do {
     y=(y+1)*2+1;
-    } while(x>7);
+    } while(ww>1);
 
     x=6+8/9*8/3;   
-    stdin x; 
+    stdin m; 
     mas=36/7; 
 
-    while(y==0){
+    integer gg;
+    gg=1;
+
+    while(l==0){
         stdin mas;
-        stdout x;
+        stdout gg;
     }
 }

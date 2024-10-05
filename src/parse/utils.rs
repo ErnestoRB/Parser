@@ -95,6 +95,88 @@ impl TreeNode {
         }
     }
 
+
+    pub fn post_order_traversal(&self, visit: &mut dyn FnMut(&Node)) {
+        // Primero recorremos los hijos dependiendo del tipo de nodo
+        match &self.node {
+            // Si el nodo es una sentencia (Stmt), verificamos su tipo
+            Node::Stmt { kind, .. } => match kind {
+                StmtKind::If {
+                    condition,
+                    then_branch,
+                    else_branch,
+                } => {
+                    // Visitamos la condición (que es un TreeNode) de manera recursiva
+                    condition.post_order_traversal(visit);
+                    // Si existe el bloque "then", lo recorremos
+                    if let Some(then) = then_branch {
+                        then.post_order_traversal(visit);
+                    }
+                    // Si existe el bloque "else", lo recorremos
+                    if let Some(else_) = else_branch {
+                        else_.post_order_traversal(visit);
+                    }
+                }
+                StmtKind::While { condition, body } => {
+                    // Visitamos la condición (que es un TreeNode) de manera recursiva
+                    condition.post_order_traversal(visit);
+                    // Si existe el cuerpo, lo recorremos
+                    if let Some(body) = body {
+                        body.post_order_traversal(visit);
+                    }
+                }
+                StmtKind::Do { body, condition } => {
+                    // Visitamos el cuerpo si existe
+                    if let Some(body) = body {
+                        body.post_order_traversal(visit);
+                    }
+                    // Luego visitamos la condición (que es un Node) directamente
+                    visit(condition);
+                }
+                StmtKind::Assign { value, .. } => {
+                    // Visitamos el valor de la asignación (que es un TreeNode) de manera recursiva
+                    value.post_order_traversal(visit);
+                }
+                StmtKind::In { .. } => {
+                    // No tiene hijos
+                }
+                StmtKind::Out { expression } => {
+                    // Para el caso de "Out", visitamos la expresión
+                    expression.post_order_traversal(visit);
+                }
+            },
+            // Si el nodo es una expresión (Exp), verificamos su tipo
+            Node::Exp { kind, .. } => match kind {
+                ExpKind::Op { left, right, .. } => {
+                    // Visitamos el lado izquierdo de manera recursiva
+                    left.post_order_traversal(visit);
+                    // Si hay un lado derecho, también lo visitamos de manera recursiva
+                    if let Some(right) = right {
+                        right.post_order_traversal(visit);
+                    }
+                }
+                ExpKind::Const { .. } | ExpKind::ConstF { .. } | ExpKind::Id { .. } => {
+                    // Estos nodos no tienen hijos
+                }
+            },
+            // Si el nodo es una declaración (Decl), verificamos el tipo
+            Node::Decl { kind, .. } => match kind {
+                DeclKind::Var { .. } => {
+                    // No hay hijos en este caso
+                }
+            },
+        }
+    
+        // Finalmente, visitamos el nodo actual
+        visit(&self.node);
+    
+        // Luego, recorremos los hermanos si existen
+        if let Some(sibling) = &self.sibling {
+            sibling.post_order_traversal(visit);
+        }
+    }
+    
+
     pub fn print(&self) {
         print_tree(self, 0);
     }
