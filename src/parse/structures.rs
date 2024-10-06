@@ -100,6 +100,7 @@ pub enum ExpType {
     // Para el tipado
     Void,
     Integer,
+    Double,
     Boolean,
 }
 

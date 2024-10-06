@@ -834,8 +834,52 @@ impl Parser {
         Some(node)
     }
 
+    fn Validar_Tipo(&mut self) -> Option<TreeNode> {
+        let mut node = self.termino()?;
+    
+        // Obtenemos el token actual
+        match self.get_current_token().cloned() {
+            Some(token) => match token.token_type {
+                TokenType::INT => {
+                    self._match(TokenType::INT, true); // siempre es true
+                    let cursor = self.current_cursor.clone();
+                    
+                    if let Node::Exp { ref mut typ, .. } = node.node {
+                        *typ = ExpType::Integer; 
+                    }
+                    return Some(node); // Retornamos el nodo
+                }
+                TokenType::FLOAT => {
+                    self._match(TokenType::FLOAT, true); // siempre es true
+                    let cursor = self.current_cursor.clone();
+                    
+                    if let Node::Exp { ref mut typ, .. } = node.node {
+                        *typ = ExpType::Double; // Asignamos el tipo como Float
+                    }
+                    return Some(node); // Retornamos el nodo
+                }
+                _ => {
+                    let expected_token_type = vec![TokenType::INT, TokenType::FLOAT];
+                    self.errors.push(ParseError {
+                        message: format!(
+                            "Expresión no válida. Se esperaba uno de los siguientes tokens: {:?}",
+                            expected_token_type
+                        ),
+                        current_token: Some(token.clone()),
+                        expected_token_type: Some(expected_token_type),
+                    });
+                    return None; // Retornamos None ya que hubo un error
+                }
+            },
+            None => None, // Si no hay token, retornamos None
+        }
+    }  
+    
+
     fn termino(&mut self) -> Option<TreeNode> {
-        let mut node = self.factor()?;
+        let mut node = self.factor()?; // Obtenemos el nodo de un factor
+        
+        // Mientras el token sea una operación de multiplicación, división o módulo
         while matches!(
             self.get_current_token().unwrap().token_type,
             TokenType::TIMES | TokenType::DIV | TokenType::MODULUS
@@ -843,12 +887,20 @@ impl Parser {
             let op = self.get_current_token().unwrap().token_type.clone();
             self._match(op.clone(), true);
             let cursor = self.current_cursor.clone();
-            let right = self.factor()?;
-
+            let right = self.factor()?; // Obtenemos el nodo derecho de la expresión
+    
+            // Inferencia de tipos: si alguno es flotante, el tipo es flotante
+            let result_typ = match (&node.node, &right.node) {
+                (Node::Exp { typ: ExpType::Double, .. }, _) => ExpType::Double,
+                (_, Node::Exp { typ: ExpType::Double, .. }) => ExpType::Double,
+                _ => ExpType::Integer,
+            };
+    
+            // Creamos un nuevo nodo de operación con el tipo inferido
             node = TreeNode::new(Node::Exp {
                 cursor,
                 id: Uuid::new_v4().to_string(),
-                typ: ExpType::Void,
+                typ: result_typ, // Asignamos el tipo inferido
                 kind: ExpKind::Op {
                     op,
                     left: Box::new(node),
@@ -857,23 +909,34 @@ impl Parser {
                 val: None
             });
         }
-        Some(node)
+        Some(node) // Retornamos el nodo
     }
-
+    
     fn factor(&mut self) -> Option<TreeNode> {
-        let mut node = self.componente()?;
+        let mut node = self.componente()?; // Obtenemos un nodo de componente
+        
+        // Mientras el token sea una operación de potencia
         while matches!(
             self.get_current_token().unwrap().token_type,
             TokenType::POWER
         ) {
             let op = self.get_current_token().unwrap().token_type.clone();
-            let right = self.componente()?;
+            let right = self.componente()?; // Obtenemos el nodo derecho
             self._match(op.clone(), true);
             let cursor = self.current_cursor.clone();
+    
+            // Inferencia de tipos: si alguno es flotante, el tipo es flotante
+            let result_typ = match (&node.node, &right.node) {
+                (Node::Exp { typ: ExpType::Double, .. }, _) => ExpType::Double,
+                (_, Node::Exp { typ: ExpType::Double, .. }) => ExpType::Double,
+                _ => ExpType::Integer,
+            };
+    
+            // Creamos un nuevo nodo de operación con el tipo inferido
             node = TreeNode::new(Node::Exp {
                 cursor,
                 id: Uuid::new_v4().to_string(),
-                typ: ExpType::Void,
+                typ: result_typ, // Asignamos el tipo inferido
                 kind: ExpKind::Op {
                     op,
                     left: Box::new(node),
@@ -882,8 +945,9 @@ impl Parser {
                 val: None
             });
         }
-        Some(node)
+        Some(node) // Retornamos el nodo
     }
+    
 
     fn componente(&mut self) -> Option<TreeNode> {
         match self.get_current_token().cloned() {
@@ -891,22 +955,23 @@ impl Parser {
                 TokenType::LPAR => {
                     self._match(TokenType::LPAR, true); // siempre es true
                     let cursor = self.current_cursor.clone();
-                    let node = self.expresion()?;
+                    let node = self.expresion()?; // Aquí se infiere el tipo según la expresión
+                    
                     if !self._match(TokenType::RPAR, true) {
-                        // dejamos que quien use la expresion se encargue de definir el punto seguro :)
-                        return None;
+                        return None; // Error de sintaxis, paréntesis desbalanceados
                     }
-                    Some(node)
+                    Some(node) // Retornamos el nodo con el tipo ya inferido en la expresión
                 }
                 TokenType::INT => {
                     let value: i32 = token.lexemme.parse().unwrap();
                     self._match(TokenType::INT, true); // siempre es true
                     let cursor = self.current_cursor.clone();
+                    // Creamos un nodo de constante entera con tipo inferido
                     Some(TreeNode::new(Node::Exp {
                         cursor,
                         id: Uuid::new_v4().to_string(),
                         kind: ExpKind::Const { value },
-                        typ: ExpType::Void,
+                        typ: ExpType::Integer, // Inferimos que es un entero
                         val: None
                     }))
                 }
@@ -914,15 +979,16 @@ impl Parser {
                     let value: f32 = token.lexemme.parse().unwrap();
                     self._match(TokenType::FLOAT, true); // siempre es true
                     let cursor = self.current_cursor.clone();
+                    // Creamos un nodo de constante flotante con tipo inferido
                     Some(TreeNode::new(Node::Exp {
                         cursor,
                         id: Uuid::new_v4().to_string(),
                         kind: ExpKind::ConstF { value },
-                        typ: ExpType::Void,
+                        typ: ExpType::Double, // Inferimos que es un flotante
                         val: None
                     }))
                 }
-                TokenType::ID => self.incremento(),
+                TokenType::ID => self.incremento(), // Se delega a la función incremento
                 _ => {
                     let expected_token_type = vec![TokenType::LPAR, TokenType::INT, TokenType::ID];
                     self.errors.push(ParseError {
@@ -939,6 +1005,7 @@ impl Parser {
             None => None,
         }
     }
+    
 
     fn incremento(&mut self) -> Option<TreeNode> {
         let name = self.get_current_token().unwrap().lexemme.clone();
