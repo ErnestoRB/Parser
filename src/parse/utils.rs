@@ -1,4 +1,9 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    ops::{Add, Div, Mul, Rem, Sub},
+};
+
+use crate::structures::NodeValue;
 
 use super::structures::{DeclKind, ExpKind, Node, StmtKind, SymbolData, TreeNode};
 
@@ -95,7 +100,6 @@ impl TreeNode {
         }
     }
 
-
     pub fn post_order_traversal(&self, visit: &mut dyn FnMut(&Node)) {
         // Primero recorremos los hijos dependiendo del tipo de nodo
         match &self.node {
@@ -166,16 +170,94 @@ impl TreeNode {
                 }
             },
         }
-    
+
         // Finalmente, visitamos el nodo actual
         visit(&self.node);
-    
+
         // Luego, recorremos los hermanos si existen
         if let Some(sibling) = &self.sibling {
             sibling.post_order_traversal(visit);
         }
     }
-    
+    pub fn post_order_traversal_mut(&mut self, visit: &mut dyn FnMut(&mut Node)) {
+        // Primero recorremos los hijos dependiendo del tipo de nodo
+        match &mut self.node {
+            // Si el nodo es una sentencia (Stmt), verificamos su tipo
+            Node::Stmt { kind, .. } => match kind {
+                StmtKind::If {
+                    condition,
+                    then_branch,
+                    else_branch,
+                } => {
+                    // Visitamos la condición (que es un TreeNode) de manera recursiva
+                    condition.post_order_traversal_mut(visit);
+                    // Si existe el bloque "then", lo recorremos
+                    if let Some(then) = then_branch {
+                        then.post_order_traversal_mut(visit);
+                    }
+                    // Si existe el bloque "else", lo recorremos
+                    if let Some(else_) = else_branch {
+                        else_.post_order_traversal_mut(visit);
+                    }
+                }
+                StmtKind::While { condition, body } => {
+                    // Visitamos la condición (que es un TreeNode) de manera recursiva
+                    condition.post_order_traversal_mut(visit);
+                    // Si existe el cuerpo, lo recorremos
+                    if let Some(body) = body {
+                        body.post_order_traversal_mut(visit);
+                    }
+                }
+                StmtKind::Do { body, condition } => {
+                    // Visitamos el cuerpo si existe
+                    if let Some(body) = body {
+                        body.post_order_traversal_mut(visit);
+                    }
+                    // Luego visitamos la condición (que es un Node) directamente
+                    visit(condition);
+                }
+                StmtKind::Assign { value, .. } => {
+                    // Visitamos el valor de la asignación (que es un TreeNode) de manera recursiva
+                    value.post_order_traversal_mut(visit);
+                }
+                StmtKind::In { .. } => {
+                    // No tiene hijos
+                }
+                StmtKind::Out { expression } => {
+                    // Para el caso de "Out", visitamos la expresión
+                    expression.post_order_traversal_mut(visit);
+                }
+            },
+            // Si el nodo es una expresión (Exp), verificamos su tipo
+            Node::Exp { kind, .. } => match kind {
+                ExpKind::Op { left, right, .. } => {
+                    // Visitamos el lado izquierdo de manera recursiva
+                    left.post_order_traversal_mut(visit);
+                    // Si hay un lado derecho, también lo visitamos de manera recursiva
+                    if let Some(right) = right {
+                        right.post_order_traversal_mut(visit);
+                    }
+                }
+                ExpKind::Const { .. } | ExpKind::ConstF { .. } | ExpKind::Id { .. } => {
+                    // Estos nodos no tienen hijos
+                }
+            },
+            // Si el nodo es una declaración (Decl), verificamos el tipo
+            Node::Decl { kind, .. } => match kind {
+                DeclKind::Var { .. } => {
+                    // No hay hijos en este caso
+                }
+            },
+        }
+
+        // Finalmente, visitamos el nodo actual
+        visit(&mut self.node);
+
+        // Luego, recorremos los hermanos si existen
+        if let Some(sibling) = &mut self.sibling {
+            sibling.post_order_traversal_mut(visit);
+        }
+    }
 
     pub fn print(&self) {
         print_tree(self, 0);
@@ -203,6 +285,110 @@ impl TreeNode {
 }
 
 impl Node {}
+
+impl Add for NodeValue {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        match (self, other) {
+            (NodeValue::Int(left), NodeValue::Int(right)) => NodeValue::Int(left + right),
+            (NodeValue::Int(left), NodeValue::Float(right)) => {
+                NodeValue::Float(left as f32 + right)
+            }
+
+            (NodeValue::Float(left), NodeValue::Int(right)) => {
+                NodeValue::Float(left + right as f32)
+            }
+
+            (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left - right),
+        }
+    }
+}
+
+impl Sub for NodeValue {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        match (self, other) {
+            (NodeValue::Int(left), NodeValue::Int(right)) => NodeValue::Int(left - right),
+            (NodeValue::Int(left), NodeValue::Float(right)) => {
+                NodeValue::Float(left as f32 - right)
+            }
+
+            (NodeValue::Float(left), NodeValue::Int(right)) => {
+                NodeValue::Float(left - right as f32)
+            }
+
+            (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left - right),
+        }
+    }
+}
+
+impl Mul for NodeValue {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self {
+        match (self, other) {
+            (NodeValue::Int(left), NodeValue::Int(right)) => NodeValue::Int(left * right),
+            (NodeValue::Int(left), NodeValue::Float(right)) => {
+                NodeValue::Float(left as f32 * right)
+            }
+
+            (NodeValue::Float(left), NodeValue::Int(right)) => {
+                NodeValue::Float(left * right as f32)
+            }
+
+            (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left * right),
+        }
+    }
+}
+
+impl Rem for NodeValue {
+    type Output = Self;
+
+    fn rem(self, other: Self) -> Self {
+        match (self, other) {
+            (NodeValue::Int(left), NodeValue::Int(right)) => NodeValue::Int(left % right),
+            (NodeValue::Int(left), NodeValue::Float(right)) => {
+                NodeValue::Float(left as f32 % right)
+            }
+            (NodeValue::Float(left), NodeValue::Int(right)) => {
+                NodeValue::Float(left % right as f32)
+            }
+            (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left % right),
+        }
+    }
+}
+
+impl Div for NodeValue {
+    type Output = Self;
+
+    fn div(self, other: Self) -> Self {
+        match (self, other) {
+            (NodeValue::Int(left), NodeValue::Int(right)) => NodeValue::Int(left / right),
+            (NodeValue::Int(left), NodeValue::Float(right)) => {
+                NodeValue::Float(left as f32 / right)
+            }
+            (NodeValue::Float(left), NodeValue::Int(right)) => {
+                NodeValue::Float(left / right as f32)
+            }
+            (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left / right),
+        }
+    }
+}
+
+impl NodeValue {
+    pub fn pow(self, other: Self) -> Self {
+        match (self, other) {
+            (NodeValue::Int(left), NodeValue::Int(right)) => NodeValue::Int(left.pow(right as u32)),
+            (NodeValue::Int(left), NodeValue::Float(right)) => {
+                NodeValue::Float((left as f32).powf(right))
+            }
+            (NodeValue::Float(left), NodeValue::Int(right)) => NodeValue::Float(left.powi(right)),
+            (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left.powf(right)),
+        }
+    }
+}
 
 fn print_tree(node: &TreeNode, indent: usize) {
     let indentation = " ".repeat(indent);
@@ -262,9 +448,17 @@ fn print_tree(node: &TreeNode, indent: usize) {
                 print_tree(expression, indent + 4);
             }
         },
-        Node::Exp { kind, .. } => match kind {
+        Node::Exp { kind, val, .. } => match kind {
             ExpKind::Op { op, left, right } => {
-                println!("{}Exp: Op ({:?})", indentation, op);
+                print!("{}Exp: Op ({:?})", indentation, op);
+                if let Some(value) = val {
+                    match value {
+                        NodeValue::Int(i) => println!(" Val (int): {}", i),
+                        NodeValue::Float(f) => println!(" Val (float): {}", f),
+                    }
+                } else {
+                    println!();
+                }
                 println!("{}  Left:", indentation);
                 print_tree(left, indent + 4);
                 println!("{}  Right:", indentation);
@@ -283,9 +477,6 @@ fn print_tree(node: &TreeNode, indent: usize) {
             }
         },
     }
-    /*  for child in &node.children {
-        print_tree(child, indent + 2);
-    } */
     if let Some(sibling) = &node.sibling {
         print_tree(sibling, indent);
     }
@@ -294,17 +485,16 @@ fn print_tree(node: &TreeNode, indent: usize) {
 fn print_tree_node(node: &Node, indent: usize) {
     let temp_node = TreeNode {
         node: node.clone(),
-        // children: vec![],
         sibling: None,
     };
     print_tree(&temp_node, indent);
 }
 
-pub fn print_sym_table(table: HashMap<String, SymbolData>) {
+pub fn print_sym_table(table: &HashMap<String, SymbolData>) {
     for (k, v) in table.iter() {
         print!(
-            "Variable:  {}  - ({},{}) | Location {} | Usages: ",
-            k, v.declaration.lin, v.declaration.col, v.mem_location
+            "Variable:  {}  | Position ({},{}) | Value: {:?} | Location {} | Usages: ",
+            k, v.declaration.lin, v.declaration.col, v.value, v.mem_location
         );
         for usage in v.usages.iter() {
             print!("({}, {}),", usage.cursor.lin, usage.cursor.col,)

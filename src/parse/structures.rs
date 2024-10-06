@@ -35,7 +35,7 @@ pub enum Node {
         typ: ExpType,
         id: String,
         cursor: Option<Cursor>,
-        val: Option<NodeValue>
+        val: Option<NodeValue>,
     },
     Decl {
         kind: DeclKind,
@@ -107,6 +107,7 @@ pub enum ExpType {
 pub struct SymbolData {
     pub mem_location: i32,
     pub declaration: Cursor,
+    pub value: Option<NodeValue>,
     pub usages: Vec<SymbolReference>,
 }
 

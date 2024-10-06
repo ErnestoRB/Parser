@@ -21,6 +21,9 @@ struct Cli {
     #[arg(short, long)]
     /// Output file to a json
     json: bool,
+    #[arg(short, long)]
+    /// Semantic analysis
+    analyze: bool,
     /// Output symboltable to stdout
     #[arg(long)]
     symbols: bool,
@@ -38,7 +41,8 @@ struct BuildArgs {
 }
 
 fn main() {
-    let cli = Cli::parse();
+    let mut cli = Cli::parse();
+    cli.analyze = true;
 
     match &cli.command {
         Commands::Build(args) => {
@@ -101,7 +105,7 @@ fn main() {
                         }
                     }
                     let (root_op, errors) = parse(res.0);
-                    if let Some(root) = root_op {
+                    if let Some(mut root) = root_op {
                         //hubo arbol
                         if let Some(filename) = Path::new(&file).file_name() {
                             if cli.json {
@@ -142,11 +146,11 @@ fn main() {
                         }
                         root.print(); // imprimir a stdout
 
-                        if cli.symbols {
-                            let (symbol_table, errors) = create_symbol_table(&root);
-                            print_sym_table(symbol_table);
+                        if cli.analyze {
+                            let (mut symbol_table, errors) = create_symbol_table(&root); // Hacer mutable la tabla de símbolos
+
                             if !errors.is_empty() {
-                                eprintln!("Errores:");
+                                eprintln!("Errores al construir tabla de simbolos:");
                                 for error in errors {
                                     eprintln!(
                                         "ERROR: {} en la posición {:?}",
@@ -154,10 +158,8 @@ fn main() {
                                     );
                                 }
                             }
-
-                            let (mut symbol_table, errors) = create_symbol_table(&root); // Hacer mutable la tabla de símbolos
                             let eval_errors =
-                                evaluate_arithmetic_expressions(&root, &mut symbol_table);
+                                evaluate_arithmetic_expressions(&mut root, &mut symbol_table);
                             if !eval_errors.is_empty() {
                                 eprintln!("Errores de evaluación:");
                                 for error in eval_errors {
@@ -167,6 +169,10 @@ fn main() {
                                     );
                                 }
                             }
+                            if cli.symbols {
+                                print_sym_table(&symbol_table);
+                            }
+                            root.print(); // imprimir a stdout
                         }
                     }
                     if !errors.is_empty() {
