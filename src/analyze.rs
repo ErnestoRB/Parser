@@ -102,7 +102,6 @@ pub fn evaluate_arithmetic_expressions(
 
     node.post_order_traversal_mut(&mut |node: &mut Node| {
         // Verificamos si es un nodo de expresión
-
         match node {
             Node::Stmt { kind, .. } => {
                 if let StmtKind::Assign { name, value } = kind {
@@ -136,13 +135,23 @@ pub fn evaluate_arithmetic_expressions(
                             TokenType::MODULUS => left_val % right_val,
                             TokenType::POWER => left_val.pow(right_val),
                             TokenType::DIV => {
-                                // if right_val == 0 {
-                                //     errors.push(SymbolError {
-                                //         message: "División por cero".to_string(),
-                                //         cursor: cursor.clone().unwrap(),
-                                //     });
-                                //     return;
-                                // }
+                                match right_val {
+                                    NodeValue::Int(rv) if rv == 0 => {
+                                        errors.push(SymbolError {
+                                            message: "División entre cero".to_string(),
+                                            cursor: cursor.clone().unwrap(),
+                                        });
+                                        return;
+                                    }
+                                    NodeValue::Float(rv) if rv == 0.0 => {
+                                        errors.push(SymbolError {
+                                            message: "División entre cero".to_string(),
+                                            cursor: cursor.clone().unwrap(),
+                                        });
+                                        return;
+                                    }
+                                    _ => {}
+                                }
                                 left_val / right_val
                             }
                             _ => {
