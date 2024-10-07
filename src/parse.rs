@@ -953,7 +953,11 @@ impl Parser {
             self.get_current_token().unwrap().token_type,
             TokenType::INC | TokenType::DEC
         ) {
-            let op = self.get_current_token().unwrap().token_type.clone(); // siempre es true
+            let op = match self.get_current_token().unwrap().token_type.clone() {
+                TokenType::INC => TokenType::SUM,
+                TokenType::DEC => TokenType::MIN,
+                _ => TokenType::SUM,
+            }; // siempre es true
             self._match(op.clone(), true);
             let cursor2 = self.current_cursor.clone();
 
