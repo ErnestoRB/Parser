@@ -953,12 +953,13 @@ impl Parser {
             self.get_current_token().unwrap().token_type,
             TokenType::INC | TokenType::DEC
         ) {
-            let op = match self.get_current_token().unwrap().token_type.clone() {
+            let op_token = self.get_current_token().unwrap().token_type.clone();
+            let op = match op_token {
                 TokenType::INC => TokenType::SUM,
                 TokenType::DEC => TokenType::MIN,
                 _ => TokenType::SUM,
             }; // siempre es true
-            self._match(op.clone(), true);
+            self._match(op_token, true);
             let cursor2 = self.current_cursor.clone();
 
             Some(TreeNode::new(Node::Exp {
