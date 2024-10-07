@@ -423,7 +423,9 @@ impl Analyzer {
                             });
                         }
 
-                    }
+                    },
+                    ExpKind::Const { value } => *val = Some(NodeValue::Int(value.clone())),
+                    ExpKind::ConstF { value, } => *val = Some(NodeValue::Float(value.clone())),
                     _ => {}
                 },
                 _ => {}
