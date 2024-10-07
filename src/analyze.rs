@@ -262,6 +262,8 @@ impl Analyzer {
                                     cursor: cursor.clone().unwrap_or(fake_cursor()),
                                 });
                             } else {
+                                // inferencia
+                                *typ = ExpType::Boolean;
                                 if let Node::Exp {  typ, ..} = &left.node {
                                     if !matches!(typ, ExpType::Boolean)  {
                                         self.errors.push(AnalyzeError {
