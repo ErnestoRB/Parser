@@ -444,6 +444,12 @@ impl Analyzer {
     }
 }
 
+
+pub fn analyze(node: &mut TreeNode) -> (Vec<AnalyzeError>,HashMap<String, SymbolData>) {
+    let analyzer = Analyzer::new();
+    analyzer.analyze(node)
+}
+
 fn get_expression_value(
     node: &TreeNode,
     symbol_table: &HashMap<String, SymbolData>,
