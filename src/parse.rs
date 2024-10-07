@@ -157,12 +157,17 @@ impl Parser {
             typ, // es seguro
             true,
         );
-        let node = self.identificador(typ2);
+        let exp_type = match typ2 {
+            TokenType::INTEGER => ExpType::Integer,
+            TokenType::DOUBLE => ExpType::Float,
+            _ => ExpType::Void, // no deberia suceder
+        };
+        let node = self.identificador(exp_type);
         self._match(TokenType::SCOL, true);
         node
     }
 
-    fn identificador(&mut self, typ: TokenType) -> Option<TreeNode> {
+    fn identificador(&mut self, typ: ExpType) -> Option<TreeNode> {
         match self.get_current_token().cloned() {
             Some(token) => {
                 if !self._match(TokenType::ID, true) {
@@ -326,14 +331,14 @@ impl Parser {
                                             typ: ExpType::Void,
                                             kind: ExpKind::Id { name: name.clone() },
                                             id: Uuid::new_v4().to_string(),
-                                            val: None
+                                            val: None,
                                         })),
                                         right: Some(Box::new(TreeNode::new(Node::Exp {
                                             cursor: None,
                                             typ: ExpType::Void,
                                             kind: ExpKind::Const { value: 1 },
                                             id: Uuid::new_v4().to_string(),
-                                            val: None
+                                            val: None,
                                         }))),
                                     },
                                     val: None,
@@ -605,7 +610,7 @@ impl Parser {
                     id: Uuid::new_v4().to_string(),
                     kind: StmtKind::Do {
                         body: body.map(|n| Box::new(n)),
-                        condition: Box::new(condition.node),
+                        condition: Box::new(condition),
                     },
                 }))
             }
@@ -679,7 +684,7 @@ impl Parser {
                             left: Box::new(node),
                             right: Some(Box::new(right)),
                         },
-                        val: None
+                        val: None,
                     });
                 }
                 _ => {}
@@ -708,7 +713,7 @@ impl Parser {
                             left: Box::new(node),
                             right: Some(Box::new(right)),
                         },
-                        val: None
+                        val: None,
                     });
                 }
                 _ => {}
@@ -736,7 +741,7 @@ impl Parser {
                             left: Box::new(left),
                             right: None,
                         },
-                        val: None
+                        val: None,
                     }))
                 }
                 _ => self.expresion_rel(),
@@ -769,7 +774,7 @@ impl Parser {
                             left: Box::new(node),
                             right: Some(Box::new(right)),
                         },
-                        val: None
+                        val: None,
                     });
                 }
                 _ => {}
@@ -801,7 +806,7 @@ impl Parser {
                             left: Box::new(node),
                             right: Some(Box::new(right)),
                         },
-                        val: None
+                        val: None,
                     });
                 }
                 TokenType::INT | TokenType::FLOAT => {
@@ -817,7 +822,7 @@ impl Parser {
                                 left: Box::new(node),
                                 right: Some(Box::new(right)),
                             },
-                            val: None
+                            val: None,
                         });
                     } else {
                         self.errors.push(ParseError {
@@ -854,7 +859,7 @@ impl Parser {
                     left: Box::new(node),
                     right: Some(Box::new(right)),
                 },
-                val: None
+                val: None,
             });
         }
         Some(node)
@@ -879,7 +884,7 @@ impl Parser {
                     left: Box::new(node),
                     right: Some(Box::new(right)),
                 },
-                val: None
+                val: None,
             });
         }
         Some(node)
@@ -890,7 +895,7 @@ impl Parser {
             Some(token) => match token.token_type {
                 TokenType::LPAR => {
                     self._match(TokenType::LPAR, true); // siempre es true
-                    let cursor = self.current_cursor.clone();
+                                                        // let cursor = self.current_cursor.clone();
                     let node = self.expresion()?;
                     if !self._match(TokenType::RPAR, true) {
                         // dejamos que quien use la expresion se encargue de definir el punto seguro :)
@@ -907,7 +912,7 @@ impl Parser {
                         id: Uuid::new_v4().to_string(),
                         kind: ExpKind::Const { value },
                         typ: ExpType::Void,
-                        val: None
+                        val: None,
                     }))
                 }
                 TokenType::FLOAT => {
@@ -919,7 +924,7 @@ impl Parser {
                         id: Uuid::new_v4().to_string(),
                         kind: ExpKind::ConstF { value },
                         typ: ExpType::Void,
-                        val: None
+                        val: None,
                     }))
                 }
                 TokenType::ID => self.incremento(),
@@ -963,17 +968,17 @@ impl Parser {
                         id: Uuid::new_v4().to_string(),
                         typ: ExpType::Void,
                         kind: ExpKind::Id { name },
-                        val: None
+                        val: None,
                     })),
                     right: Some(Box::new(TreeNode::new(Node::Exp {
                         cursor: None,
                         id: Uuid::new_v4().to_string(),
                         kind: ExpKind::Const { value: 1 },
                         typ: ExpType::Void,
-                        val: None
+                        val: None,
                     }))),
                 },
-                val: None
+                val: None,
             }))
         } else {
             Some(TreeNode::new(Node::Exp {
@@ -981,7 +986,7 @@ impl Parser {
                 id: Uuid::new_v4().to_string(),
                 typ: ExpType::Void,
                 kind: ExpKind::Id { name },
-                val: None
+                val: None,
             }))
         }
     }

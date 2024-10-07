@@ -2,10 +2,11 @@ use scanner::data::{Cursor, Token, TokenType};
 use serde::{Deserialize, Serialize};
 
 //Valor para nodo exp ya sea Int o Float
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum NodeValue {
     Int(i32),
     Float(f32),
+    Boolean(bool),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -45,7 +46,7 @@ pub enum Node {
 }
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum DeclKind {
-    Var { typ: TokenType, name: String },
+    Var { typ: ExpType, name: String },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -62,7 +63,7 @@ pub enum StmtKind {
     },
     Do {
         body: Option<Box<TreeNode>>,
-        condition: Box<Node>,
+        condition: Box<TreeNode>,
     },
     Assign {
         name: String,
@@ -100,6 +101,7 @@ pub enum ExpType {
     // Para el tipado
     Void,
     Integer,
+    Float,
     Boolean,
 }
 
@@ -107,12 +109,13 @@ pub enum ExpType {
 pub struct SymbolData {
     pub mem_location: i32,
     pub declaration: Cursor,
+    pub typ: ExpType,
     pub value: Option<NodeValue>,
     pub usages: Vec<SymbolReference>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct SymbolError {
+pub struct AnalyzeError {
     pub message: String,
     pub cursor: Cursor,
 }

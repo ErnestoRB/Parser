@@ -2,6 +2,20 @@ main {
 
     integer a;
 
-    a = 2+24+5*60+6+3-4/3+1.2;
+    //a = 2+24+5*60+6+3-4/3+1.2;
+    a = 100 +3;
+
+    double b;
+    b = 3.0 + a;
+    double c;
+    stdout c;
+    //stdout b==1;
+
+    if a==103 {
+
+    }
+
+    double d;
+    d = c + (10 + 20);
 
 }

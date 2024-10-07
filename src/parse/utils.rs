@@ -58,7 +58,7 @@ impl TreeNode {
                         body.pre_order_traversal(visit);
                     }
                     // Luego visitamos la condición (que es un Node) directamente
-                    visit(condition);
+                    condition.pre_order_traversal(visit);
                 }
                 StmtKind::Assign { value, .. } => {
                     // Visitamos el valor de la asignación (que es un TreeNode) de manera recursiva
@@ -135,7 +135,7 @@ impl TreeNode {
                         body.post_order_traversal(visit);
                     }
                     // Luego visitamos la condición (que es un Node) directamente
-                    visit(condition);
+                    condition.post_order_traversal(visit);
                 }
                 StmtKind::Assign { value, .. } => {
                     // Visitamos el valor de la asignación (que es un TreeNode) de manera recursiva
@@ -214,7 +214,7 @@ impl TreeNode {
                         body.post_order_traversal_mut(visit);
                     }
                     // Luego visitamos la condición (que es un Node) directamente
-                    visit(condition);
+                    condition.post_order_traversal_mut(visit);
                 }
                 StmtKind::Assign { value, .. } => {
                     // Visitamos el valor de la asignación (que es un TreeNode) de manera recursiva
@@ -301,6 +301,11 @@ impl Add for NodeValue {
             }
 
             (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left - right),
+            (NodeValue::Int(_), NodeValue::Boolean(_))
+            | (NodeValue::Float(_), NodeValue::Boolean(_))
+            | (NodeValue::Boolean(_), NodeValue::Int(_))
+            | (NodeValue::Boolean(_), NodeValue::Float(_))
+            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => todo!(),
         }
     }
 }
@@ -320,6 +325,11 @@ impl Sub for NodeValue {
             }
 
             (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left - right),
+            (NodeValue::Int(_), NodeValue::Boolean(_))
+            | (NodeValue::Float(_), NodeValue::Boolean(_))
+            | (NodeValue::Boolean(_), NodeValue::Int(_))
+            | (NodeValue::Boolean(_), NodeValue::Float(_))
+            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => todo!(),
         }
     }
 }
@@ -339,6 +349,11 @@ impl Mul for NodeValue {
             }
 
             (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left * right),
+            (NodeValue::Int(_), NodeValue::Boolean(_))
+            | (NodeValue::Float(_), NodeValue::Boolean(_))
+            | (NodeValue::Boolean(_), NodeValue::Int(_))
+            | (NodeValue::Boolean(_), NodeValue::Float(_))
+            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => todo!(),
         }
     }
 }
@@ -356,6 +371,11 @@ impl Rem for NodeValue {
                 NodeValue::Float(left % right as f32)
             }
             (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left % right),
+            (NodeValue::Int(_), NodeValue::Boolean(_))
+            | (NodeValue::Float(_), NodeValue::Boolean(_))
+            | (NodeValue::Boolean(_), NodeValue::Int(_))
+            | (NodeValue::Boolean(_), NodeValue::Float(_))
+            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => todo!(),
         }
     }
 }
@@ -373,6 +393,43 @@ impl Div for NodeValue {
                 NodeValue::Float(left / right as f32)
             }
             (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left / right),
+            (NodeValue::Int(_), NodeValue::Boolean(_))
+            | (NodeValue::Float(_), NodeValue::Boolean(_))
+            | (NodeValue::Boolean(_), NodeValue::Int(_))
+            | (NodeValue::Boolean(_), NodeValue::Float(_))
+            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => todo!(),
+        }
+    }
+}
+
+impl PartialEq for NodeValue {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (NodeValue::Int(i), NodeValue::Int(r)) => i == r,
+            (NodeValue::Int(i), NodeValue::Float(r)) => *i as f32 == *r,
+            (NodeValue::Int(i), NodeValue::Boolean(r)) => (*i == 1) == *r,
+            (NodeValue::Float(i), NodeValue::Int(r)) => *i == *r as f32,
+            (NodeValue::Float(i), NodeValue::Float(r)) => i == r,
+            (NodeValue::Float(i), NodeValue::Boolean(r)) => (*i == 1.0) == *r,
+            (NodeValue::Boolean(i), NodeValue::Int(r)) => *i == (*r == 1),
+            (NodeValue::Boolean(i), NodeValue::Float(r)) => *i == (*r == 1.0),
+            (NodeValue::Boolean(i), NodeValue::Boolean(r)) => i == r,
+        }
+    }
+}
+
+impl PartialOrd for NodeValue {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match (self, other) {
+            (NodeValue::Int(l), NodeValue::Int(r)) => l.partial_cmp(r),
+            (NodeValue::Int(l), NodeValue::Float(r)) => (*l as f32).partial_cmp(r),
+            (NodeValue::Float(l), NodeValue::Int(r)) => l.partial_cmp(&(*r as f32)),
+            (NodeValue::Float(l), NodeValue::Float(r)) => l.partial_cmp(r),
+            (NodeValue::Int(_), NodeValue::Boolean(_))
+            | (NodeValue::Float(_), NodeValue::Boolean(_))
+            | (NodeValue::Boolean(_), NodeValue::Int(_))
+            | (NodeValue::Boolean(_), NodeValue::Float(_))
+            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => None,
         }
     }
 }
@@ -386,6 +443,19 @@ impl NodeValue {
             }
             (NodeValue::Float(left), NodeValue::Int(right)) => NodeValue::Float(left.powi(right)),
             (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left.powf(right)),
+            (NodeValue::Int(_), NodeValue::Boolean(_))
+            | (NodeValue::Float(_), NodeValue::Boolean(_))
+            | (NodeValue::Boolean(_), NodeValue::Int(_))
+            | (NodeValue::Boolean(_), NodeValue::Float(_))
+            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => todo!(),
+        }
+    }
+
+    pub fn to_float(self) -> Self {
+        match self {
+            NodeValue::Int(value) => NodeValue::Float(value as f32),
+            NodeValue::Float(_) => self,
+            NodeValue::Boolean(_) => todo!(),
         }
     }
 }
@@ -432,7 +502,7 @@ fn print_tree(node: &TreeNode, indent: usize) {
                     print_tree(body, indent + 4);
                 }
                 println!("{}  Condition:", indentation);
-                print_tree_node(condition, indent + 4);
+                print_tree(condition, indent + 4);
             }
             StmtKind::Assign { name, value } => {
                 println!("{}Stmt: Assign (Name: {})", indentation, name);
@@ -448,13 +518,14 @@ fn print_tree(node: &TreeNode, indent: usize) {
                 print_tree(expression, indent + 4);
             }
         },
-        Node::Exp { kind, val, .. } => match kind {
+        Node::Exp { kind, val, typ, .. } => match kind {
             ExpKind::Op { op, left, right } => {
-                print!("{}Exp: Op ({:?})", indentation, op);
+                print!("{}Exp: Op ({:?}) | Type {:?}", indentation, op, typ);
                 if let Some(value) = val {
                     match value {
-                        NodeValue::Int(i) => println!(" Val (int): {}", i),
-                        NodeValue::Float(f) => println!(" Val (float): {}", f),
+                        NodeValue::Int(i) => println!(" Val: {}", i),
+                        NodeValue::Float(f) => println!(" Val: {}", f),
+                        NodeValue::Boolean(b) => println!(" Val: {}", b),
                     }
                 } else {
                     println!();
@@ -467,13 +538,19 @@ fn print_tree(node: &TreeNode, indent: usize) {
                 }
             }
             ExpKind::Const { value } => {
-                println!("{}Exp: Const (Value: {})", indentation, value);
+                println!(
+                    "{}Exp: Const (Value: {} | Type: {:?})",
+                    indentation, value, typ
+                );
             }
             ExpKind::ConstF { value } => {
-                println!("{}Exp: Const Float (Value: {})", indentation, value);
+                println!(
+                    "{}Exp: Const Float (Value: {}) | Type: {:?})",
+                    indentation, value, typ
+                );
             }
             ExpKind::Id { name } => {
-                println!("{}Exp: Id (Name: {})", indentation, name);
+                println!("{}Exp: Id (Name: {}) | Type: {:?}", indentation, name, typ);
             }
         },
     }
@@ -482,23 +559,17 @@ fn print_tree(node: &TreeNode, indent: usize) {
     }
 }
 
-fn print_tree_node(node: &Node, indent: usize) {
-    let temp_node = TreeNode {
-        node: node.clone(),
-        sibling: None,
-    };
-    print_tree(&temp_node, indent);
-}
-
 pub fn print_sym_table(table: &HashMap<String, SymbolData>) {
+    println!("------ TABLA DE SIMBOLOS --------");
     for (k, v) in table.iter() {
         print!(
-            "Variable:  {}  | Position ({},{}) | Value: {:?} | Location {} | Usages: ",
-            k, v.declaration.lin, v.declaration.col, v.value, v.mem_location
+            "Variable:  {}  | Position ({},{}) | Type: {:?} | Value: {:?} | Location {} | Usages: ",
+            k, v.declaration.lin, v.declaration.col, v.typ, v.value, v.mem_location
         );
         for usage in v.usages.iter() {
             print!("({}, {}),", usage.cursor.lin, usage.cursor.col,)
         }
         println!();
     }
+    println!("------ TABLA DE SIMBOLOS --------");
 }
