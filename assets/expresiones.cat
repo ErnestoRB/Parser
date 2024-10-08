@@ -11,7 +11,7 @@ main {
     stdout c;
     //stdout b==1;
 
-    if a==103 {
+    if 3<(3==10) {
 
     }
 

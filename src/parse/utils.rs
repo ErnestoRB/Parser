@@ -287,117 +287,127 @@ impl TreeNode {
 impl Node {}
 
 impl Add for NodeValue {
-    type Output = Self;
+    type Output = Option<Self>;
 
-    fn add(self, other: Self) -> Self {
+    fn add(self, other: Self) -> Option<Self> {
         match (self, other) {
-            (NodeValue::Int(left), NodeValue::Int(right)) => NodeValue::Int(left + right),
+            (NodeValue::Int(left), NodeValue::Int(right)) => Some(NodeValue::Int(left + right)),
             (NodeValue::Int(left), NodeValue::Float(right)) => {
-                NodeValue::Float(left as f32 + right)
+                Some(NodeValue::Float(left as f32 + right))
             }
 
             (NodeValue::Float(left), NodeValue::Int(right)) => {
-                NodeValue::Float(left + right as f32)
+                Some(NodeValue::Float(left + right as f32))
             }
 
-            (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left - right),
+            (NodeValue::Float(left), NodeValue::Float(right)) => {
+                Some(NodeValue::Float(left - right))
+            }
             (NodeValue::Int(_), NodeValue::Boolean(_))
             | (NodeValue::Float(_), NodeValue::Boolean(_))
             | (NodeValue::Boolean(_), NodeValue::Int(_))
             | (NodeValue::Boolean(_), NodeValue::Float(_))
-            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => todo!(),
+            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => None,
         }
     }
 }
 
 impl Sub for NodeValue {
-    type Output = Self;
+    type Output = Option<Self>;
 
-    fn sub(self, other: Self) -> Self {
+    fn sub(self, other: Self) -> Option<Self> {
         match (self, other) {
-            (NodeValue::Int(left), NodeValue::Int(right)) => NodeValue::Int(left - right),
+            (NodeValue::Int(left), NodeValue::Int(right)) => Some(NodeValue::Int(left - right)),
             (NodeValue::Int(left), NodeValue::Float(right)) => {
-                NodeValue::Float(left as f32 - right)
+                Some(NodeValue::Float(left as f32 - right))
             }
 
             (NodeValue::Float(left), NodeValue::Int(right)) => {
-                NodeValue::Float(left - right as f32)
+                Some(NodeValue::Float(left - right as f32))
             }
 
-            (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left - right),
+            (NodeValue::Float(left), NodeValue::Float(right)) => {
+                Some(NodeValue::Float(left - right))
+            }
             (NodeValue::Int(_), NodeValue::Boolean(_))
             | (NodeValue::Float(_), NodeValue::Boolean(_))
             | (NodeValue::Boolean(_), NodeValue::Int(_))
             | (NodeValue::Boolean(_), NodeValue::Float(_))
-            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => todo!(),
+            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => None,
         }
     }
 }
 
 impl Mul for NodeValue {
-    type Output = Self;
+    type Output = Option<Self>;
 
-    fn mul(self, other: Self) -> Self {
+    fn mul(self, other: Self) -> Option<Self> {
         match (self, other) {
-            (NodeValue::Int(left), NodeValue::Int(right)) => NodeValue::Int(left * right),
+            (NodeValue::Int(left), NodeValue::Int(right)) => Some(NodeValue::Int(left * right)),
             (NodeValue::Int(left), NodeValue::Float(right)) => {
-                NodeValue::Float(left as f32 * right)
+                Some(NodeValue::Float(left as f32 * right))
             }
 
             (NodeValue::Float(left), NodeValue::Int(right)) => {
-                NodeValue::Float(left * right as f32)
+                Some(NodeValue::Float(left * right as f32))
             }
 
-            (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left * right),
+            (NodeValue::Float(left), NodeValue::Float(right)) => {
+                Some(NodeValue::Float(left * right))
+            }
             (NodeValue::Int(_), NodeValue::Boolean(_))
             | (NodeValue::Float(_), NodeValue::Boolean(_))
             | (NodeValue::Boolean(_), NodeValue::Int(_))
             | (NodeValue::Boolean(_), NodeValue::Float(_))
-            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => todo!(),
+            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => None,
         }
     }
 }
 
 impl Rem for NodeValue {
-    type Output = Self;
+    type Output = Option<Self>;
 
-    fn rem(self, other: Self) -> Self {
+    fn rem(self, other: Self) -> Option<Self> {
         match (self, other) {
-            (NodeValue::Int(left), NodeValue::Int(right)) => NodeValue::Int(left % right),
+            (NodeValue::Int(left), NodeValue::Int(right)) => Some(NodeValue::Int(left % right)),
             (NodeValue::Int(left), NodeValue::Float(right)) => {
-                NodeValue::Float(left as f32 % right)
+                Some(NodeValue::Float(left as f32 % right))
             }
             (NodeValue::Float(left), NodeValue::Int(right)) => {
-                NodeValue::Float(left % right as f32)
+                Some(NodeValue::Float(left % right as f32))
             }
-            (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left % right),
+            (NodeValue::Float(left), NodeValue::Float(right)) => {
+                Some(NodeValue::Float(left % right))
+            }
             (NodeValue::Int(_), NodeValue::Boolean(_))
             | (NodeValue::Float(_), NodeValue::Boolean(_))
             | (NodeValue::Boolean(_), NodeValue::Int(_))
             | (NodeValue::Boolean(_), NodeValue::Float(_))
-            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => todo!(),
+            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => None,
         }
     }
 }
 
 impl Div for NodeValue {
-    type Output = Self;
+    type Output = Option<Self>;
 
-    fn div(self, other: Self) -> Self {
+    fn div(self, other: Self) -> Option<Self> {
         match (self, other) {
-            (NodeValue::Int(left), NodeValue::Int(right)) => NodeValue::Int(left / right),
+            (NodeValue::Int(left), NodeValue::Int(right)) => Some(NodeValue::Int(left / right)),
             (NodeValue::Int(left), NodeValue::Float(right)) => {
-                NodeValue::Float(left as f32 / right)
+                Some(NodeValue::Float(left as f32 / right))
             }
             (NodeValue::Float(left), NodeValue::Int(right)) => {
-                NodeValue::Float(left / right as f32)
+                Some(NodeValue::Float(left / right as f32))
             }
-            (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left / right),
+            (NodeValue::Float(left), NodeValue::Float(right)) => {
+                Some(NodeValue::Float(left / right))
+            }
             (NodeValue::Int(_), NodeValue::Boolean(_))
             | (NodeValue::Float(_), NodeValue::Boolean(_))
             | (NodeValue::Boolean(_), NodeValue::Int(_))
             | (NodeValue::Boolean(_), NodeValue::Float(_))
-            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => todo!(),
+            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => None,
         }
     }
 }
@@ -435,27 +445,33 @@ impl PartialOrd for NodeValue {
 }
 
 impl NodeValue {
-    pub fn pow(self, other: Self) -> Self {
+    pub fn pow(self, other: Self) -> Option<Self> {
         match (self, other) {
-            (NodeValue::Int(left), NodeValue::Int(right)) => NodeValue::Int(left.pow(right as u32)),
-            (NodeValue::Int(left), NodeValue::Float(right)) => {
-                NodeValue::Float((left as f32).powf(right))
+            (NodeValue::Int(left), NodeValue::Int(right)) => {
+                Some(NodeValue::Int(left.pow(right as u32)))
             }
-            (NodeValue::Float(left), NodeValue::Int(right)) => NodeValue::Float(left.powi(right)),
-            (NodeValue::Float(left), NodeValue::Float(right)) => NodeValue::Float(left.powf(right)),
+            (NodeValue::Int(left), NodeValue::Float(right)) => {
+                Some(NodeValue::Float((left as f32).powf(right)))
+            }
+            (NodeValue::Float(left), NodeValue::Int(right)) => {
+                Some(NodeValue::Float(left.powi(right)))
+            }
+            (NodeValue::Float(left), NodeValue::Float(right)) => {
+                Some(NodeValue::Float(left.powf(right)))
+            }
             (NodeValue::Int(_), NodeValue::Boolean(_))
             | (NodeValue::Float(_), NodeValue::Boolean(_))
             | (NodeValue::Boolean(_), NodeValue::Int(_))
             | (NodeValue::Boolean(_), NodeValue::Float(_))
-            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => todo!(),
+            | (NodeValue::Boolean(_), NodeValue::Boolean(_)) => None,
         }
     }
 
-    pub fn to_float(self) -> Self {
+    pub fn to_float(self) -> Option<Self> {
         match self {
-            NodeValue::Int(value) => NodeValue::Float(value as f32),
-            NodeValue::Float(_) => self,
-            NodeValue::Boolean(_) => todo!(),
+            NodeValue::Int(value) => Some(NodeValue::Float(value as f32)),
+            NodeValue::Float(_) => Some(self),
+            NodeValue::Boolean(_) => None,
         }
     }
 }

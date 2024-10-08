@@ -332,61 +332,107 @@ impl Analyzer {
                                         //     right_val = right_val.to_float();
                                         // }
                                     let result = match op {
-                                        TokenType::SUM => left_val + right_val,
-                                        TokenType::MIN => left_val - right_val,
-                                        TokenType::TIMES => left_val * right_val,
-                                        TokenType::MODULUS => left_val % right_val,
-                                        TokenType::POWER => left_val.pow(right_val),
-                                        TokenType::DIV => {
-                                            match right_val {
-                                                NodeValue::Int(rv) if rv == 0 => {
-                                                    self.errors.push(AnalyzeError {
-                                                        message: "División entre cero".to_string(),
-                                                        cursor: cursor.clone().unwrap(),
-                                                    });
-                                                    return;
-                                                }
-                                                NodeValue::Float(rv) if rv == 0.0 => {
-                                                    self.errors.push(AnalyzeError {
-                                                        message: "División entre cero".to_string(),
-                                                        cursor: cursor.clone().unwrap(),
-                                                    });
-                                                    return;
-                                                }
-                                                _ => {}
+                                        TokenType::SUM => {
+                                            let op = left_val + right_val;
+                                            if let None = &op {
+                                                self.errors.push(AnalyzeError { message: 
+                                                    "La suma solo está definida para numeros".to_string(), cursor:  cursor.clone().unwrap_or(fake_cursor()) });
                                             }
-                                            left_val / right_val
+                                            op
+                                        },
+                                        TokenType::MIN => {
+                                            let op = left_val - right_val;
+                                            if let None = &op {
+                                                self.errors.push(AnalyzeError { message: 
+                                                    "La resta solo está definida para numeros".to_string(), cursor:  cursor.clone().unwrap_or(fake_cursor()) });
+                                            }
+                                            op
+                                        },
+                                        TokenType::TIMES => {
+                                                let op = left_val * right_val;
+                                                if let None = &op {
+                                                    self.errors.push(AnalyzeError { message: 
+                                                        "La multiplicación solo está definida para numeros".to_string(), cursor:  cursor.clone().unwrap_or(fake_cursor()) });
+                                                }
+                                                op
+                                        },
+                                        TokenType::MODULUS => {
+                                            let op = left_val % right_val;
+                                            if let None = &op {
+                                                self.errors.push(AnalyzeError { message: 
+                                                    "El módulo solo está definida para numeros".to_string(), cursor:  cursor.clone().unwrap_or(fake_cursor()) });
+                                            }
+                                            op
+                                        },
+                                        TokenType::POWER => {
+                                            let op = left_val.pow(right_val);
+                                            if let None = &op {
+                                                self.errors.push(AnalyzeError { message: 
+                                                    "La exponenciación solo está definida para numeros".to_string(), cursor:  cursor.clone().unwrap_or(fake_cursor()) });
+                                            }
+                                            op
+                                        },                                     
+                                        TokenType::DIV => {
+                                            {
+                                                match right_val {
+                                                    NodeValue::Int(rv) if rv == 0 => {
+                                                        self.errors.push(AnalyzeError {
+                                                            message: "División entre cero".to_string(),
+                                                            cursor: cursor.clone().unwrap(),
+                                                        });
+                                                        return;
+                                                    }
+                                                    NodeValue::Float(rv) if rv == 0.0 => {
+                                                        self.errors.push(AnalyzeError {
+                                                            message: "División entre cero".to_string(),
+                                                            cursor: cursor.clone().unwrap(),
+                                                        });
+                                                        return;
+                                                    }
+                                                    _ => {}
+                                                }
+                                                let op = left_val / right_val;
+                                                if let None = &op {
+                                                    self.errors.push(AnalyzeError { message: 
+                                                        "La división solo está definida para numeros".to_string(), cursor:  cursor.clone().unwrap_or(fake_cursor()) });
+                                                }
+                                                op
+                                            }
                                         }
-                                        TokenType::NE => {
+                                        TokenType::NE => Some({
                                             NodeValue::Boolean(left_val != right_val)
-                                        },
-                                        TokenType::EQ => {
+                                        }),
+                                        TokenType::EQ => Some({
                                             NodeValue::Boolean(left_val == right_val)
-                                        },
-                                        TokenType::LT => {
+                                        }),
+                                        TokenType::LT => Some({
                                             NodeValue::Boolean(left_val < right_val)
-                                        },
-                                        TokenType::GT => {
+                                        }),
+                                        TokenType::GT => Some({
                                             NodeValue::Boolean(left_val > right_val)
-                                        },
-                                        TokenType::GE => {
+                                        }),
+                                        TokenType::GE => Some({
                                             NodeValue::Boolean(left_val >= right_val)
-                                        },
-                                        TokenType::LE => {
+                                        }),
+                                        TokenType::LE => Some({
                                             NodeValue::Boolean(left_val <= right_val)
-                                        },
+                                        }),
                                         TokenType::AND => {
                                             if let (NodeValue::Boolean(l), NodeValue::Boolean(r)) = (left_val, right_val) {
-                                                NodeValue::Boolean(l && r)
+                                                Some(NodeValue::Boolean(l && r))
                                             } else {
-                                                panic!("Operación AND inválida. Se esperaban dos operandos booleanos")
+                                                self.errors.push(AnalyzeError { message: 
+                                                    "El operador AND solo está definida para booleanos".to_string(), cursor:  cursor.clone().unwrap_or(fake_cursor()) });
+                                                None
                                             }
                                         },
                                         TokenType::OR => {
                                             if let (NodeValue::Boolean(l), NodeValue::Boolean(r)) = (left_val, right_val) {
-                                                NodeValue::Boolean(l || r)
+                                               Some( NodeValue::Boolean(l || r))
                                             } else {
-                                                panic!("Operación OR inválida. Se esperaban dos operandos booleanos")
+                                                self.errors.push(AnalyzeError { message: 
+                                                    "El operador OR solo está definida para booleanos".to_string(), cursor:  cursor.clone().unwrap_or(fake_cursor()) });
+                                                None
                                             }
                                         }
                                         _ => {
@@ -394,7 +440,7 @@ impl Analyzer {
                                             panic!("Se asignó un token no valido a la operacion")
                                         }
                                     };
-                                    *val = Some(result);
+                                    *val = result;
                                 },
                                 None => {
                                     if matches!(op, TokenType::NEG) {
@@ -420,7 +466,7 @@ impl Analyzer {
                             *val = symbol.value.clone(); // obtenemos el valor de la tabla de símbolos :)
                         } else {
                             self.errors.push(AnalyzeError {
-                                message: format!("Variable no declarada: {}", name),
+                                message: format!("No se puede evaluar el valor de una variable no declarada: {}", name),
                                 cursor: cursor.clone().unwrap(),
                             });
                         }
@@ -438,12 +484,8 @@ impl Analyzer {
 
     pub fn analyze(mut self, node: &mut TreeNode) -> (Vec<AnalyzeError>,HashMap<String, SymbolData>) {
         self.create_symbol_table(node);
-        if self.errors.len() == 0 {
-            self.check_types(node);
-        }
-        if self.errors.len() == 0 {
-            self.evaluate_expressions(node);
-        }
+        self.check_types(node);
+        self.evaluate_expressions(node);
         (self.errors, self.symbol_table)
     }
 }
