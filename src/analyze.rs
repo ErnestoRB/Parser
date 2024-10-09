@@ -320,7 +320,7 @@ impl Analyzer {
                                                 "La asignación de un flotante a un entero no es válida".to_string(), cursor: exp_cursor.clone().unwrap_or(fake_cursor()) }
                                         );
                                     } else {
-                                        if let ExpType::Float = typ {
+                                        if let ExpType::Float = &symbol.typ{
                                             symbol.value = val.clone().map(|v| v.to_float()).flatten();
                                             *exp_value = val.clone().map(|v| v.to_float()).flatten();
                                         } else {
