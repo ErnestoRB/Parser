@@ -312,10 +312,18 @@ impl Analyzer {
                     if let StmtKind::Assign { name, value, exp_value } = kind {
                         // aqui aprovechamos que tenemos el valor calculado (gracias a el recorrido postorden, por lo que guardamos este valor en la tabla de simbolos)
                         match &value.node {
-                            Node::Exp { val, .. } => {
+                            Node::Exp { val, typ, cursor: exp_cursor, .. } => {
                                 if let Some(symbol) = self.symbol_table.get_mut(name) {
-                                    symbol.value = val.clone();
-                                    *exp_value = val.clone();
+                                    if let (ExpType::Integer, ExpType::Float) = (&symbol.typ, typ) {
+                                        self.errors.push(
+                                            AnalyzeError { message: 
+                                                "La asignación de un flotante a un entero no es válida".to_string(), cursor: exp_cursor.clone().unwrap_or(fake_cursor()) }
+                                        );
+                                    } else {
+                                        symbol.value = val.clone();
+                                        *exp_value = val.clone();
+                                    }
+                                
                                 }
                             }
                             _ => panic!("Error en el analizador sintáctico. El lado derecho de una asignación no fue expresión."),
