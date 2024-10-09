@@ -128,8 +128,13 @@ impl Analyzer {
                             if matches!(typ, ExpType::Boolean) {
                                 self.errors.push(AnalyzeError { message: "No se puede asignar una expresion booleana a una variable".to_string(), cursor: value_cursor.clone().unwrap_or(fake_cursor()) });
                             } else {
+                               
                                 if &symbol.typ != typ {
-                                    self.errors.push(AnalyzeError { message: "Se asigno un valor de tipo distinto!".to_string(), cursor: value_cursor.clone().unwrap_or(fake_cursor()) });
+                                    if let (ExpType::Float, ExpType::Integer) = (&symbol.typ, typ) {
+                                        
+                                    } else {
+                                        self.errors.push(AnalyzeError { message: format!("Se asignó un tipo {:?} a una variable de tipo {:?}",typ,&symbol.typ ).to_string(), cursor: value_cursor.clone().unwrap_or(fake_cursor()) });
+                                    }
                                 }
                             }
                         }
