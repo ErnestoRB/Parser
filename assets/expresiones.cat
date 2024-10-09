@@ -4,16 +4,13 @@ main {
 
     //a = 2+24+5*60+6+3-4/3+1.2;
     a = 100 +3;
-
+    a = a+1;
     double b;
     b = 3.0 + a;
     double c;
     stdout c;
     //stdout b==1;
 
-    if 3<(3==10) {
-
-    }
 
     double d;
     d = c + (10 + 20);

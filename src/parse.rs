@@ -320,6 +320,7 @@ impl Parser {
                             cursor: cursor.clone(),
                             id: Uuid::new_v4().to_string(),
                             kind: StmtKind::Assign {
+                                exp_value: None,
                                 name: name.clone(),
                                 value: Box::new(TreeNode::new(Node::Exp {
                                     cursor: cursor.clone(),
@@ -370,6 +371,7 @@ impl Parser {
             cursor,
             id: Uuid::new_v4().to_string(),
             kind: StmtKind::Assign {
+                exp_value: None,
                 name,
                 value: Box::new(value),
             },

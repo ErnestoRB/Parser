@@ -520,8 +520,16 @@ fn print_tree(node: &TreeNode, indent: usize) {
                 println!("{}  Condition:", indentation);
                 print_tree(condition, indent + 4);
             }
-            StmtKind::Assign { name, value } => {
-                println!("{}Stmt: Assign (Name: {})", indentation, name);
+            StmtKind::Assign {
+                name,
+                value,
+                exp_value,
+                ..
+            } => {
+                println!(
+                    "{}Stmt: Assign (Name: {}) | Value: {:?}",
+                    indentation, name, exp_value
+                );
                 println!("{}  Value:", indentation);
                 print_tree(value, indent + 4);
             }

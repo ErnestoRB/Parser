@@ -47,6 +47,10 @@ impl Analyzer {
                             cursor: cursor.clone().unwrap(),
                         });
                     } else {
+                        let mut references = vec![];
+                        references.push(SymbolReference {
+                           cursor: cursor.clone().unwrap(),
+                        });
                         self.symbol_table.insert(
                             name.to_owned(),
                             SymbolData {
@@ -54,7 +58,7 @@ impl Analyzer {
                                 typ: typ.clone(),
                                 declaration: cursor.clone().unwrap(),
                                 value: None,
-                                usages: vec![],
+                                usages: references,
                             },
                         );
                         location += 1;
@@ -121,7 +125,7 @@ impl Analyzer {
                             self.errors.push(AnalyzeError { message: "Condicion de Do no es booleana".to_string(), cursor: condition_cursor.clone().unwrap_or(fake_cursor()) });
                         }
                     },
-                    StmtKind::Assign { value, name } => 
+                    StmtKind::Assign { value, name, .. } => 
                     if let Node::Exp { typ, cursor: value_cursor, .. } =  &value.node {
                         if let Some(symbol) = self.symbol_table.get(name) {
 
@@ -305,12 +309,13 @@ impl Analyzer {
             // Verificamos si es un nodo de expresión
             match node {
                 Node::Stmt { kind, .. } => {
-                    if let StmtKind::Assign { name, value } = kind {
+                    if let StmtKind::Assign { name, value, exp_value } = kind {
                         // aqui aprovechamos que tenemos el valor calculado (gracias a el recorrido postorden, por lo que guardamos este valor en la tabla de simbolos)
                         match &value.node {
                             Node::Exp { val, .. } => {
                                 if let Some(symbol) = self.symbol_table.get_mut(name) {
                                     symbol.value = val.clone();
+                                    *exp_value = val.clone();
                                 }
                             }
                             _ => panic!("Error en el analizador sintáctico. El lado derecho de una asignación no fue expresión."),

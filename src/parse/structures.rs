@@ -67,6 +67,7 @@ pub enum StmtKind {
     },
     Assign {
         name: String,
+        exp_value: Option<NodeValue>,
         value: Box<TreeNode>,
     },
     In {
