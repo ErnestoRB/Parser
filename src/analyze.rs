@@ -530,7 +530,8 @@ fn get_expression_value(
             ExpKind::ConstF { value } => Some(NodeValue::Float(*value)), // Constantes enteras
             ExpKind::Id { name } => {
                 // Si es un identificador, buscamos su valor en la tabla de símbolos
-                symbol_table.get(name).map(|data| data.value.clone())? // Devuelve el valor asignado a la variable como valor
+                //symbol_table.get(name).map(|data| data.value.clone())? // Devuelve el valor asignado a la variable como valor
+                None
             }
             ExpKind::Op { .. } => val.clone(),
         }
