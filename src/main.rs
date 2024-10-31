@@ -1,7 +1,7 @@
 use std::{fs, io::Write, path::Path};
 
 use clap::{Args, Parser, Subcommand};
-use parser::parse;
+use parser::{parse, utils::print_sym_table, Analyzer};
 use scanner::tokenize_file;
 
 #[derive(Parser)]
@@ -19,6 +19,12 @@ struct Cli {
     #[arg(short, long)]
     /// Output file to a json
     json: bool,
+    #[arg(short, long)]
+    /// Semantic analysis
+    analyze: bool,
+    /// Output symboltable to stdout
+    #[arg(long)]
+    symbols: bool,
 }
 
 #[derive(Subcommand, Clone)]
@@ -33,7 +39,8 @@ struct BuildArgs {
 }
 
 fn main() {
-    let cli = Cli::parse();
+    let mut cli = Cli::parse();
+    cli.analyze = true;
 
     match &cli.command {
         Commands::Build(args) => {
@@ -96,7 +103,7 @@ fn main() {
                         }
                     }
                     let (root_op, errors) = parse(res.0);
-                    if let Some(root) = root_op {
+                    if let Some(mut root) = root_op {
                         //hubo arbol
                         if let Some(filename) = Path::new(&file).file_name() {
                             if cli.json {
@@ -136,6 +143,26 @@ fn main() {
                             }
                         }
                         root.print(); // imprimir a stdout
+
+                        if cli.analyze {
+                            let analyzer = Analyzer::new();
+                            let (errors, symbol_table) = analyzer.analyze(&mut root); // Hacer mutable la tabla de símbolos
+                            println!("Arbol con anotaciones:");
+                            root.print(); // imprimir a stdout
+                            if !errors.is_empty() {
+                                eprintln!("Errores al analizar semánticamente:");
+                                for error in errors {
+                                    eprintln!(
+                                        "ERROR: {} en la posición {:?}",
+                                        error.message, error.cursor
+                                    );
+                                }
+                            } else {
+                            }
+                            if cli.symbols {
+                                print_sym_table(&symbol_table);
+                            }
+                        }
                     }
                     if !errors.is_empty() {
                         for err in errors {
