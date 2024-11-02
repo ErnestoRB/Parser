@@ -1,7 +1,7 @@
+use clap::{Args, Parser, Subcommand};
 use std::{fs, io::Write, path::Path};
 
-use clap::{Args, Parser, Subcommand};
-use parser::{parse, utils::print_sym_table, Analyzer};
+use parser::{codegen, parse, utils::print_sym_table, Analyzer};
 use scanner::tokenize_file;
 
 #[derive(Parser)]
@@ -22,6 +22,9 @@ struct Cli {
     #[arg(short, long)]
     /// Semantic analysis
     analyze: bool,
+    #[arg(short, long)]
+    /// Gode generation
+    codegen: bool,
     /// Output symboltable to stdout
     #[arg(long)]
     symbols: bool,
@@ -158,6 +161,36 @@ fn main() {
                                     );
                                 }
                             } else {
+                                if cli.codegen {
+                                    // Generación de codigo
+                                    let output_file =
+                                        Path::new(&file).parent().unwrap_or(Path::new(".")).join(
+                                            Path::new(&file)
+                                                .file_name()
+                                                .map(|f| f.to_str().unwrap_or("program"))
+                                                .unwrap_or("program")
+                                                .to_owned()
+                                                + ".vm",
+                                        );
+                                    if cli.verbose {
+                                        println!(
+                                            "[VERBOSE] Trying to generate code to {:?}",
+                                            output_file.to_str()
+                                        );
+                                    }
+
+                                    if let Ok(mut file_handle) =
+                                        fs::File::create(output_file.clone())
+                                    {
+                                        let text = codegen::CodeGen::new().generate(&root);
+                                        match file_handle.write_fmt(format_args!("{}", text)) {
+                                            Ok(_) => {}
+                                            Err(e) => eprint!("Error al escribir en el archivo"),
+                                        }
+                                    } else {
+                                        eprintln!("ERROR: Could not create file {}", file);
+                                    }
+                                }
                             }
                             if cli.symbols {
                                 print_sym_table(&symbol_table);

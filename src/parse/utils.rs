@@ -474,6 +474,17 @@ impl NodeValue {
             NodeValue::Boolean(_) => None,
         }
     }
+
+    pub fn to_string(&self) -> String {
+        match self {
+            NodeValue::Int(value) => value.to_string(),
+            NodeValue::Float(value) => value.to_string(),
+            NodeValue::Boolean(value) => match value {
+                true => 1.to_string(),
+                false => 0.to_string(),
+            },
+        }
+    }
 }
 
 fn print_tree(node: &TreeNode, indent: usize) {
