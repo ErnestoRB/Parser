@@ -1,5 +1,3 @@
-use uuid::Uuid;
-
 use crate::structures::TreeNode;
 
 pub struct CodeGen {
@@ -247,4 +245,9 @@ impl CodeGen {
         }
         code
     }
+}
+
+pub fn generate_code(node: &TreeNode) -> String {
+    let code_gen = CodeGen::new();
+    code_gen.generate(node)
 }
