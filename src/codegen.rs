@@ -32,19 +32,22 @@ impl CodeGen {
                     else_branch,
                 } => {
                     let else_label = self.gen_label();
+                    let end_label = self.gen_label();
                     code.push_str(&format!(
-                        "{}\nJMPEQ {}\n{}\n{}:\n{}", // JMPEQ porque se busca que el resultado de la expresión sea 0
-                        self.gen_node_code(condition.as_ref()), // primero evaluar condicion
+                        "{}\nJMPEQ {}\n{}\nJMP {}\n{}:\n{}\n{}:", // JMPEQ porque se busca que el resultado de la expresión sea 0
+                        self.gen_node_code(condition.as_ref()),   // primero evaluar condicion
                         else_label, // saltar a rama else si no se cumple la condicion
                         then_branch
                             .as_ref()
                             .map(|n| self.gen_node_code(n.as_ref())) // ejecutar el cuerpo if
                             .unwrap_or_else(|| "".to_string()),
-                        else_label, // etiqueta de fin
+                        end_label,  // saltar al final
+                        else_label, // etiqueta de else
                         else_branch
                             .as_ref()
                             .map(|n| self.gen_node_code(n.as_ref())) // ejecutar el else
-                            .unwrap_or_else(|| "".to_string())
+                            .unwrap_or_else(|| "".to_string()),
+                        end_label // etiqueta de fin
                     ));
                 }
                 crate::structures::StmtKind::While { condition, body } => {
