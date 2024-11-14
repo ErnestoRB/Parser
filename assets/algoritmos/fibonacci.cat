@@ -1,0 +1,15 @@
+main 
+{
+    integer a,b,i,aux;
+    a=0;
+    b=1;
+    stdin i;
+    stdout a;
+    while(0<i) {
+        i--;
+        aux = b+a;
+        a=b;
+        b=aux;
+        stdout a;
+    }
+}

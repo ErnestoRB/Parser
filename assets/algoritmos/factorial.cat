@@ -1,0 +1,12 @@
+main {
+    integer fact,x;
+    stdin x;
+    fact = 1;
+    if 0 < x {
+        while x > 0 {
+            fact = fact * x;
+            x = x - 1;
+        }
+    }
+    stdout fact;
+}

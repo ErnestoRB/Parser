@@ -1,0 +1,7 @@
+main {
+    double b, h;
+    stdin b;
+    stdin h;
+    stdout b * h;
+    stdout 2*b+2*h;
+}

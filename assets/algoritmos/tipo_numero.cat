@@ -1,0 +1,13 @@
+main {
+    integer a;
+    stdin a;
+    if (a>0) {
+        stdout 0;
+    }
+    if (a<0) {
+        stdout 1;
+    }
+    if (a==0) {
+        stdout 2;
+    }
+}

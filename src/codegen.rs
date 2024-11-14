@@ -238,7 +238,7 @@ impl CodeGen {
                 cursor: _,
             } => match kind {
                 crate::structures::DeclKind::Var { typ: _, name } => {
-                    code.push_str(&format!("LOAD_CONST 1\nSTORE_VAR {}", name))
+                    code.push_str(&format!("LOAD_CONST 0\nSTORE_VAR {}", name))
                 }
             },
         };

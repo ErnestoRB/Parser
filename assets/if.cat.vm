@@ -1,0 +1,14 @@
+LOAD_CONST 0
+
+JMPEQ label1
+LOAD_CONST 0
+
+PRINT
+
+JMP label2
+label1:
+LOAD_CONST 1
+
+PRINT
+
+label2:

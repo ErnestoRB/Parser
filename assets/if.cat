@@ -1,0 +1,9 @@
+main {
+   // integer a;
+   // stdin a;
+    if 1==0{
+        stdout 0;
+    }else {
+        stdout 1;
+    }
+}

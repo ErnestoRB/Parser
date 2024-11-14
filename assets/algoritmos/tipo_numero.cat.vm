@@ -1,0 +1,61 @@
+LOAD_CONST 1
+STORE_VAR a
+READ
+STORE_VAR a
+LOAD_VAR a
+
+LOAD_CONST 0
+
+SUB
+JMPGT label2
+LOAD_CONST 0
+JMP label3
+label2:
+LOAD_CONST 1
+label3:
+
+JMPEQ label1
+LOAD_CONST 0
+
+PRINT
+
+label1:
+
+LOAD_VAR a
+
+LOAD_CONST 0
+
+SUB
+JMPLT label5
+LOAD_CONST 0
+JMP label6
+label5:
+LOAD_CONST 1
+label6:
+
+JMPEQ label4
+LOAD_CONST 1
+
+PRINT
+
+label4:
+
+LOAD_VAR a
+
+LOAD_CONST 0
+
+SUB
+JMPEQ label8
+LOAD_CONST 0
+JMP label9
+label8:
+LOAD_CONST 1
+label9:
+
+JMPEQ label7
+LOAD_CONST 2
+
+PRINT
+
+label7:
+
